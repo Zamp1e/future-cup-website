@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Future Cup · 智能体调度平台</title>
+  <meta name="description" content="Future Cup 是一个智能体调度平台，以前端智能体团队为示例：受控 Agent 团队、任务 DAG、真实浏览器验证与最多三轮有界自愈，交付带验证证据的可运行工程。">
+  <meta name="theme-color" content="#f2efe7">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Future Cup · 智能体调度平台">
+  <meta property="og:description" content="智能体调度平台，以前端智能体团队为示例：受控 Agent 团队、任务 DAG、真实浏览器验证与有界自愈。交付的不是页面草稿，而是带证据的可运行工程。">
+  <meta property="og:image" content="assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Future Cup · 智能体调度平台">
+  <meta name="twitter:description" content="智能体调度平台，以前端智能体团队为示例：受控 Agent 团队、任务 DAG、真实浏览器验证与有界自愈。">
+  <meta name="twitter:image" content="assets/og.png">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/og.png">
+  <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/spline-sans-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="site-header" id="top">
+    <div class="header-inner container">
+      <a class="brand" href="#top" aria-label="Future Cup 首页">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" fill="#111714"></rect>
+          <path d="M9 21V11l7 5 7-5v10" fill="none" stroke="#7fd9c8" stroke-width="1.5"></path>
+          <circle cx="9" cy="11" r="2.2" fill="#d9552a"></circle>
+          <circle cx="16" cy="16" r="2.2" fill="#f2efe7"></circle>
+          <circle cx="23" cy="11" r="2.2" fill="#7fd9c8"></circle>
+        </svg>
+        <span class="brand-copy">
+          <span class="brand-title">FUTURE CUP</span>
+          <span class="brand-subtitle">智能体调度平台</span>
+        </span>
+      </a>
+
+      <nav class="site-nav" id="site-nav" aria-label="主导航">
+        <a href="#execution" data-nav="execution">执行主线</a>
+        <a href="#team" data-nav="team">Agent 编制</a>
+        <a href="#repair" data-nav="repair">验证与自愈</a>
+        <a href="#evidence" data-nav="evidence">证据</a>
+        <a href="#library" data-nav="library">团队库</a>
+        <a href="#boundaries" data-nav="boundaries">技术边界</a>
+      </nav>
+
+      <span class="header-meta">MVP · REACT / TS / VITE / ANTD</span>
+      <a class="header-cta" href="#execution">查看执行</a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="打开导航">
+        <svg class="icon-menu" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" fill="none" stroke="currentColor" stroke-width="1.5"></path></svg>
+        <svg class="icon-close" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.5"></path></svg>
+      </button>
+    </div>
+    <div class="run-progress" id="run-progress" aria-hidden="true"></div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1 id="hero-title">
+            <span class="line">从需求</span>
+            <span class="line">到<em>可验证的</em></span>
+            <span class="line">工程交付<span class="title-cursor" aria-hidden="true"></span></span>
+          </h1>
+
+          <p class="hero-lede">Future Cup 是一个智能体调度平台，以前端智能体团队为示例：受控 Agent 团队、任务 DAG、真实浏览器验证，以及最多三轮的有界自愈，交付带验证证据的可运行工程。</p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#execution">
+              查看一次完整执行
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"></path></svg>
+            </a>
+            <a class="text-link" href="#boundaries">阅读技术边界</a>
+          </div>
+
+          <p class="hero-note">基于 DeepSeek Harness 构建 · 当前示例：React / TypeScript / Vite / Ant Design</p>
+
+          <dl class="hero-proof" aria-label="交付证据">
+            <div><dt>示例可运行工程</dt><dd>React · TS · Vite · AntD</dd></div>
+            <div><dt>验证报告</dt><dd>build · browser · console · network</dd></div>
+            <div><dt>修复 Diff</dt><dd>≤ 3 rounds · recorded</dd></div>
+            <div><dt>事件记录</dt><dd>seq · replay · reconnect</dd></div>
+          </dl>
+        </div>
+
+        <figure class="hero-plate plate">
+          <div class="plate-bar">
+            <span class="bar-item"><span class="bar-label">RUN</span> FC-024-1104</span>
+            <span class="bar-item bar-project"><span class="bar-label">EXAMPLE</span> 运营数据看板</span>
+            <span class="bar-item bar-state"><span class="status-dot"></span> REPAIR 1/3</span>
+            <span class="bar-item"><span class="bar-label">SEQ</span> 081</span>
+          </div>
+          <div class="plate-media">
+            <img src="assets/evidence/dag.png" width="1210" height="822" alt="Future Cup 管理台真实截图：任务 DAG 与验证、修复控制流，节点显示已完成状态">
+            <span class="callout callout-a"><span class="callout-dot"></span>T-04 / 并行开发</span>
+            <span class="callout callout-b"><span class="callout-dot callout-dot-fail"></span>VERIFY → REPAIR / LOOP 1</span>
+          </div>
+          <figcaption class="plate-caption">
+            <span><strong>图 1</strong> · 任务 DAG 与验证 / 修复控制流</span>
+            <span class="caption-source">真实截图 · Future Cup 管理台 · 2026-11-03</span>
+            <a href="assets/evidence/dag-full.png" target="_blank" rel="noopener">查看原图 ↗</a>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="container">
+        <nav class="handoff" aria-label="执行阶段快捷入口">
+          <a href="#execution" data-stage-link="0"><span class="handoff-num">01</span><span class="handoff-name">需求理解</span><span class="handoff-status"><i class="status-dot"></i>DONE</span></a>
+          <a href="#execution" data-stage-link="1"><span class="handoff-num">02</span><span class="handoff-name">团队推荐</span><span class="handoff-status"><i class="status-dot"></i>DONE</span></a>
+          <a href="#execution" data-stage-link="2"><span class="handoff-num">03</span><span class="handoff-name">DAG 调度</span><span class="handoff-status"><i class="status-dot"></i>DONE</span></a>
+          <a href="#execution" data-stage-link="3"><span class="handoff-num">04</span><span class="handoff-name">并行开发</span><span class="handoff-status"><i class="status-dot"></i>DONE</span></a>
+          <a href="#execution" data-stage-link="4"><span class="handoff-num">05</span><span class="handoff-name">浏览器验证</span><span class="handoff-status"><i class="status-dot fail"></i>FAIL</span></a>
+          <a href="#execution" data-stage-link="5"><span class="handoff-num">06</span><span class="handoff-name">自愈修复</span><span class="handoff-status"><i class="status-dot run"></i>RUN</span></a>
+          <a href="#execution" data-stage-link="6"><span class="handoff-num">07</span><span class="handoff-name">交付</span><span class="handoff-status"><i class="status-dot pending"></i>NEXT</span></a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="execution" id="execution" aria-labelledby="execution-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="execution-title">一条执行主线，<br>七个可观察状态</h2>
+          <div class="section-head-aside">
+            <p>从需求结构化到交付，每个阶段都写入持久化事件。DAG 决定顺序，调度器决定谁来做，Verifier 决定是否真的完成。</p>
+            <button class="btn btn-ghost replay-btn" id="replay-btn" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l9 6-9 6V4z" fill="currentColor"></path></svg>
+              <span>重放执行</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="run-console">
+          <div class="run-console-head">
+            <span class="console-title">RUN / FC-024-1104</span>
+            <span class="console-live"><i class="status-dot"></i> LIVE VIEW</span>
+            <span class="console-meta">5/5 TASKS · REPAIR 1/3 · SEQ 081</span>
+            <span class="console-stage" id="console-stage" aria-live="polite">STAGE 06 / 自愈修复 · RUN</span>
+          </div>
+
+          <div class="run-body">
+            <div class="run-canvas">
+              <svg class="dag-svg" viewBox="0 0 1000 420" role="img" aria-labelledby="dag-title dag-desc">
+                <title id="dag-title">Future Cup 任务 DAG</title>
+                <desc id="dag-desc">需求、设计、测试、并行前端、集成、验证、修复、复验与交付的任务依赖图，包含验证失败进入修复、修复后复验、通过后交付的有界循环。</desc>
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0l10 5-10 5z" fill="#506159"></path></marker>
+                  <marker id="arrow-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0l10 5-10 5z" fill="#7fd9c8"></path></marker>
+                  <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0l10 5-10 5z" fill="#ff8a5c"></path></marker>
+                </defs>
+
+                <g class="dag-edges">
+                  <path class="dag-edge" data-edge-to="1" d="M160 59 H180" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="2" d="M320 59 H340" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="3" d="M480 59 H500" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="3" d="M480 59 C520 59 520 119 540 119" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="3" d="M640 89 C680 89 680 59 700 59" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="3" d="M640 149 C680 149 680 59 700 59" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge" data-edge-to="4" d="M800 59 C830 59 830 179 840 179" marker-end="url(#arrow)"></path>
+                  <path class="dag-edge dag-edge-fail" data-edge-to="5" data-edge-done-at="4" d="M890 208 V270" marker-end="url(#arrow-orange)"></path>
+                  <path class="dag-edge" data-edge-to="6" data-edge-done-at="6" d="M820 299 H800" marker-end="url(#arrow-teal)"></path>
+                  <path class="dag-edge dag-edge-loop" data-edge-to="4" data-edge-done-at="6" d="M660 299 C600 299 600 179 820 179" marker-end="url(#arrow-teal)"></path>
+                  <path class="dag-edge" data-edge-to="6" data-edge-done-at="6" d="M660 299 H640" marker-end="url(#arrow-teal)"></path>
+                </g>
+
+                <g class="dag-node" data-node-group="0" transform="translate(20 30)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">需求结构化</text>
+                  <text class="node-meta" x="12" y="38">T-01 · PLANNER</text>
+                </g>
+                <g class="dag-node" data-node-group="1" transform="translate(180 30)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">设计规范</text>
+                  <text class="node-meta" x="12" y="38">T-02 · UI DESIGNER</text>
+                </g>
+                <g class="dag-node" data-node-group="2" transform="translate(340 30)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">测试断言</text>
+                  <text class="node-meta" x="12" y="38">T-03 · TESTER</text>
+                </g>
+                <g class="dag-node" data-node-group="3" transform="translate(500 30)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">数据看板</text>
+                  <text class="node-meta" x="12" y="38">T-04 · FRONTEND A</text>
+                </g>
+                <g class="dag-node" data-node-group="3" transform="translate(500 120)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">详情与导出</text>
+                  <text class="node-meta" x="12" y="38">T-05 · FRONTEND B</text>
+                </g>
+                <g class="dag-node" data-node-group="3" transform="translate(700 30)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">集成与路由</text>
+                  <text class="node-meta" x="12" y="38">T-06 · INTEGRATION</text>
+                </g>
+                <g class="dag-node" data-node-group="4" transform="translate(840 150)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">浏览器验证</text>
+                  <text class="node-meta" x="12" y="38">T-07 · VERIFIER</text>
+                </g>
+                <g class="dag-node" data-node-group="5" transform="translate(840 270)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">Repair</text>
+                  <text class="node-meta" x="12" y="38">T-08 · ROUND 1/3</text>
+                </g>
+                <g class="dag-node" data-node-group="6" transform="translate(680 270)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">复验</text>
+                  <text class="node-meta" x="12" y="38">T-09 · VERIFIER</text>
+                </g>
+                <g class="dag-node" data-node-group="6" transform="translate(520 270)">
+                  <rect width="140" height="58"></rect><circle class="node-dot" cx="12" cy="14" r="3"></circle>
+                  <text class="node-title" x="22" y="19">交付</text>
+                  <text class="node-meta" x="12" y="38">T-10 · DELIVERY</text>
+                </g>
+
+                <text class="dag-label" x="906" y="247">FAIL / INCOMPLETE</text>
+                <text class="dag-label" x="720" y="325">PASS → 交付</text>
+                <text class="dag-label" x="604" y="205">RE-VERIFY</text>
+              </svg>
+
+              <ol class="dag-mobile" aria-label="任务 DAG 移动端视图">
+                <li data-node-group="0"><span class="mono">T-01</span><span>需求结构化 · Planner</span><i class="status-dot"></i></li>
+                <li data-node-group="1"><span class="mono">T-02</span><span>设计规范 · UI Designer</span><i class="status-dot"></i></li>
+                <li data-node-group="2"><span class="mono">T-03</span><span>测试断言 · Tester</span><i class="status-dot"></i></li>
+                <li data-node-group="3"><span class="mono">T-04 / T-05</span><span>数据看板 + 详情导出 · Frontend A/B 并行</span><i class="status-dot"></i></li>
+                <li data-node-group="3"><span class="mono">T-06</span><span>集成与路由 · Integration</span><i class="status-dot"></i></li>
+                <li data-node-group="4"><span class="mono">T-07</span><span>浏览器验证 · Verifier</span><i class="status-dot fail"></i></li>
+                <li data-node-group="5"><span class="mono">T-08</span><span>Repair · 第 1 / 3 轮</span><i class="status-dot run"></i></li>
+                <li data-node-group="6"><span class="mono">T-09 / T-10</span><span>复验 → 交付</span><i class="status-dot pending"></i></li>
+              </ol>
+            </div>
+
+            <div class="run-events">
+              <div class="event-head"><span>EVENT STREAM</span><span>SEQ 081</span></div>
+              <ol class="event-list" id="event-list" aria-label="运行事件流">
+                <li class="event-row" data-stage="0"><span class="seq">001</span><span class="time">00:00:00</span><span class="type">run.started</span><span class="actor">system</span></li>
+                <li class="event-row" data-stage="0"><span class="seq">002</span><span class="time">00:00:02</span><span class="type">task.dispatched</span><span class="actor">T-01 planner</span></li>
+                <li class="event-row" data-stage="0"><span class="seq">003</span><span class="time">00:00:08</span><span class="type">task.completed</span><span class="actor">T-01 planner</span></li>
+                <li class="event-row" data-stage="1"><span class="seq">004</span><span class="time">00:00:12</span><span class="type">task.dispatched</span><span class="actor">T-02 ui-designer</span></li>
+                <li class="event-row" data-stage="2"><span class="seq">005</span><span class="time">00:00:24</span><span class="type">task.dispatched</span><span class="actor">T-03 tester</span></li>
+                <li class="event-row" data-stage="3"><span class="seq">006</span><span class="time">00:00:41</span><span class="type">task.dispatched</span><span class="actor">T-04 frontend-a</span></li>
+                <li class="event-row" data-stage="3"><span class="seq">007</span><span class="time">00:00:41</span><span class="type">task.dispatched</span><span class="actor">T-05 frontend-b</span></li>
+                <li class="event-row" data-stage="4"><span class="seq">008</span><span class="time">00:01:18</span><span class="type">verification.failed</span><span class="actor">T-07 verifier</span></li>
+                <li class="event-row" data-stage="5"><span class="seq">009</span><span class="time">00:01:20</span><span class="type">repair.started</span><span class="actor">round=1</span></li>
+                <li class="event-row" data-stage="5"><span class="seq">010</span><span class="time">00:01:44</span><span class="type">repair.completed</span><span class="actor">round=1</span></li>
+                <li class="event-row" data-stage="6"><span class="seq">011</span><span class="time">00:01:46</span><span class="type">verification.passed</span><span class="actor">T-09 verifier</span></li>
+                <li class="event-row" data-stage="6"><span class="seq">012</span><span class="time">00:01:48</span><span class="type">delivery.ready</span><span class="actor">T-10 system</span></li>
+              </ol>
+              <p class="event-note">事件结构来自真实运行；此处为便于阅读的节选视图。</p>
+            </div>
+          </div>
+
+          <div class="stage-tabs" role="tablist" aria-label="执行阶段">
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="0"><span class="num">01</span><span class="name">需求理解</span><span class="status">DONE</span></button>
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="1"><span class="num">02</span><span class="name">团队推荐</span><span class="status">DONE</span></button>
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="2"><span class="num">03</span><span class="name">DAG 调度</span><span class="status">DONE</span></button>
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="3"><span class="num">04</span><span class="name">并行开发</span><span class="status">DONE</span></button>
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="4"><span class="num">05</span><span class="name">浏览器验证</span><span class="status fail">FAIL</span></button>
+            <button class="stage-tab" role="tab" aria-selected="true" aria-controls="stage-detail" data-stage="5"><span class="num">06</span><span class="name">自愈修复</span><span class="status run">RUN</span></button>
+            <button class="stage-tab" role="tab" aria-selected="false" aria-controls="stage-detail" data-stage="6"><span class="num">07</span><span class="name">交付</span><span class="status">NEXT</span></button>
+          </div>
+
+          <div class="stage-detail" id="stage-detail" role="tabpanel" aria-live="polite">
+            <div><h3>输入</h3><p data-detail="input"></p></div>
+            <div><h3>动作</h3><p data-detail="action"></p></div>
+            <div><h3>输出</h3><p data-detail="output"></p></div>
+            <div><h3>证据</h3><p data-detail="evidence" class="mono"></p></div>
+          </div>
+        </div>
+
+        <p class="figure-caption">图 2 · 前端示例运行：执行视图按真实任务状态与事件结构绘制；真实截图与原始事件见下方证据区。</p>
+      </div>
+    </section>
+
+    <section class="team" id="team" aria-labelledby="team-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="team-title">不是 Agent 市场，<br>是一支受控的完整编制</h2>
+          <div class="section-head-aside">
+            <p>用户描述目标，系统推荐完整团队，而不是让用户从空白页面随意拼装 Agent。角色原型、能力上限、工具白名单和输出契约在项目启动前完成确定性校验。当前以一支前端智能体团队为示例。</p>
+            <div class="team-stamp"><span>7 RUNTIME MEMBERS</span><span>FRONTEND EXAMPLE</span><span>FROZEN AT START</span></div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="roster">
+            <caption class="sr-only">Future Cup 受控 Agent 团队编制</caption>
+            <thead>
+              <tr><th scope="col">角色 / 座位</th><th scope="col">职责</th><th scope="col">能力</th><th scope="col">写作用域</th><th scope="col">状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Planner</span><span class="role-id">planning · 1 seat</span></td>
+                <td data-label="职责">分析需求，产出页面范围、约束、验收标准、Agent 能力需求与任务 DAG。</td>
+                <td data-label="能力" class="mono">requirement / planning</td>
+                <td data-label="写作用域" class="mono">read-only</td>
+                <td data-label="状态"><span class="status"><i class="status-dot"></i>PUBLISHED</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">UI Designer</span><span class="role-id">design · 1 seat</span></td>
+                <td data-label="职责">产出共享的布局、视觉、组件与响应式设计规范，约束两个前端分支。</td>
+                <td data-label="能力" class="mono">design / system</td>
+                <td data-label="写作用域" class="mono">src/styles, src/components</td>
+                <td data-label="状态"><span class="status"><i class="status-dot"></i>PUBLISHED</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Tester</span><span class="role-id">testing · 1 seat</span></td>
+                <td data-label="职责">从需求推导预期行为，编写组件测试与 Playwright 断言，交给独立 Verifier 执行。</td>
+                <td data-label="能力" class="mono">testing / playwright</td>
+                <td data-label="写作用域" class="mono">tests, specs</td>
+                <td data-label="状态"><span class="status"><i class="status-dot"></i>PUBLISHED</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Frontend A</span><span class="role-id">frontend · seat 1/2</span></td>
+                <td data-label="职责">实现数据看板、表格、筛选与状态管理，只写入声明的页面作用域。</td>
+                <td data-label="能力" class="mono">frontend / data</td>
+                <td data-label="写作用域" class="mono">src/pages/dashboard</td>
+                <td data-label="状态"><span class="status"><i class="status-dot run"></i>RUNNING</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Frontend B</span><span class="role-id">frontend · seat 2/2</span></td>
+                <td data-label="职责">实现详情抽屉、CSV 导出与交互反馈，与 Frontend A 并行执行。</td>
+                <td data-label="能力" class="mono">frontend / interaction</td>
+                <td data-label="写作用域" class="mono">src/pages/detail, src/components</td>
+                <td data-label="状态"><span class="status"><i class="status-dot run"></i>RUNNING</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Integration</span><span class="role-id">integration · 1 seat</span></td>
+                <td data-label="职责">集成页面与路由，解决共享接口冲突，检查构建入口与依赖。</td>
+                <td data-label="能力" class="mono">integration / routing</td>
+                <td data-label="写作用域" class="mono">src/routes, src/App.tsx</td>
+                <td data-label="状态"><span class="status"><i class="status-dot"></i>PUBLISHED</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Repair</span><span class="role-id">repair · 1 seat</span></td>
+                <td data-label="职责">诊断结构化失败，在限定源码范围内生成最小 Diff，并把结果送回完整复验。</td>
+                <td data-label="能力" class="mono">repair / bounded</td>
+                <td data-label="写作用域" class="mono">src/** · bounded</td>
+                <td data-label="状态"><span class="status"><i class="status-dot pending"></i>STANDBY</span></td>
+              </tr>
+              <tr>
+                <td data-label="角色 / 座位"><span class="role">Verifier</span><span class="role-id">verification · system-owned</span></td>
+                <td data-label="职责">独立执行结构、构建、浏览器、控制台与网络检查；不以 Agent 的自然语言回复替代证据。</td>
+                <td data-label="能力" class="mono">deterministic / evidence</td>
+                <td data-label="写作用域" class="mono">system-owned</td>
+                <td data-label="状态"><span class="status"><i class="status-dot"></i>INDEPENDENT</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="roster-note">Frontend 实例化两次；Verifier 由系统独立拥有，不计入运行时成员。团队发布前校验能力、并发、工具、记忆与输出契约。</p>
+
+        <div class="control-strip">
+          <div class="control-item"><span class="num">01</span><h3>推荐</h3><p>从已发布角色原型与团队模板生成完整编制，最多追问三个关键问题。</p></div>
+          <div class="control-item"><span class="num">02</span><h3>调整</h3><p>自然语言调整受控能力、并发与权限，不绕过角色原型与权限上限。</p></div>
+          <div class="control-item"><span class="num">03</span><h3>冻结</h3><p>项目启动时绑定不可变团队版本；修改模板创建新版本，不改变已运行项目。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="repair" id="repair" aria-labelledby="repair-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="repair-title">失败不是终点，<br>是可观察、可修复的状态</h2>
+          <div class="section-head-aside">
+            <p>Verifier 独立于生成代码的 Agent。失败会留下结构化报告、失败签名、策略选择与真实 Diff；修复后完整复验，最多三轮。以下为前端示例运行的失败与修复记录。</p>
+            <p class="coverage-line">结构 / 依赖 / TypeScript / Vite build / 桌面 + 移动 Playwright / 可见文本 / 导航交互 / 控制台 / 网络 / 截图</p>
+          </div>
+        </div>
+
+        <div class="case-file">
+          <article class="case-col">
+            <div class="case-head"><span class="case-num">01 / VERIFY</span><span class="case-status fail"><i class="status-dot fail"></i>FAIL</span></div>
+            <h3>验证报告</h3>
+            <ul class="check-list">
+              <li><span>typescript</span><span class="bad">FAIL</span></li>
+              <li><span>vite-build</span><span class="ok">PASS</span></li>
+              <li><span>browser.desktop</span><span class="ok">PASS</span></li>
+              <li><span>browser.mobile</span><span class="ok">PASS</span></li>
+              <li><span>console</span><span class="ok">PASS</span></li>
+              <li><span>network</span><span class="ok">PASS</span></li>
+            </ul>
+            <p class="case-label">失败摘要</p>
+            <p class="case-quote">TS2322: Type 'string' is not assignable to type 'number'.</p>
+            <p class="case-label">失败签名</p>
+            <code class="signature">ac985aa3…4af8b</code>
+          </article>
+
+          <article class="case-col">
+            <div class="case-head"><span class="case-num">02 / DIAGNOSE</span><span class="case-status run"><i class="status-dot run"></i>ROUND 1 / 3</span></div>
+            <h3>策略选择</h3>
+            <dl class="case-spec">
+              <div><dt>失败类别</dt><dd>typescript</dd></div>
+              <div><dt>选中策略</dt><dd>typescript-contract</dd></div>
+              <div><dt>选择理由</dt><dd>失败类别匹配；上一轮未使用该策略</dd></div>
+              <div><dt>上下文范围</dt><dd>TARGET_FILES</dd></div>
+              <div><dt>复验范围</dt><dd>完整验证流水线</dd></div>
+            </dl>
+            <p class="case-label">策略边界</p>
+            <p class="case-quote">只改变修复上下文与现有工具使用，不降低 Verifier 阈值。</p>
+          </article>
+
+          <article class="case-col">
+            <div class="case-head"><span class="case-num">03 / RE-VERIFY</span><span class="case-status ok"><i class="status-dot"></i>PASS</span></div>
+            <h3>复验结果</h3>
+            <ul class="check-list">
+              <li><span>typescript</span><span class="ok">PASS</span></li>
+              <li><span>vite-build</span><span class="ok">PASS</span></li>
+              <li><span>browser 4/4</span><span class="ok">PASS</span></li>
+              <li><span>console errors</span><span class="ok">0</span></li>
+              <li><span>failed requests</span><span class="ok">0</span></li>
+              <li><span>screenshots</span><span class="ok">4</span></li>
+            </ul>
+            <p class="case-label">结论</p>
+            <p class="case-quote">修复后完整复验通过；失败签名消失，交付证据已落盘。</p>
+          </article>
+        </div>
+
+        <div class="rounds" aria-label="修复轮次">
+          <span class="round fail">ROUND 1 · FAIL</span>
+          <span class="round-arrow">→</span>
+          <span class="round">REPAIR · typescript-contract</span>
+          <span class="round-arrow">→</span>
+          <span class="round pass">ROUND 2 · PASS</span>
+          <span class="rounds-limit">最多 3 轮自动修复</span>
+        </div>
+        <p class="escalation"><span class="escalation-mark">!</span> 重复失败签名、三轮耗尽、Repair 失败或验证不完整 → <strong>ESCALATED</strong>，进入可见的人工介入状态。</p>
+
+        <figure class="plate repair-plate">
+          <div class="plate-bar">
+            <span class="bar-item"><span class="bar-label">REPAIR</span> round 1 / 3</span>
+            <span class="bar-item"><span class="bar-label">STRATEGY</span> typescript-contract</span>
+            <span class="bar-item bar-state"><span class="status-dot fail"></span> FAIL → PASS</span>
+            <span class="bar-item"><span class="bar-label">SIGNATURE</span> ac985aa3…4af8b</span>
+          </div>
+          <div class="plate-media">
+            <img src="assets/evidence/repair.png" width="1210" height="1012" alt="Future Cup 管理台真实截图：Self-Loop 自愈页面，显示修复前后状态、失败签名、策略选择与 Unified Diff">
+          </div>
+          <figcaption class="plate-caption">
+            <span><strong>图 3</strong> · Self-Loop 自愈：失败签名、策略选择与真实 Unified Diff</span>
+            <span class="caption-source">真实截图 · Future Cup 管理台 · 2026-11-03</span>
+            <a href="assets/evidence/repair-full.png" target="_blank" rel="noopener">查看原图 ↗</a>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="evidence" id="evidence" aria-labelledby="evidence-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="evidence-title">每一次判断，<br>都留下证据</h2>
+          <div class="section-head-aside">
+            <p>交付不是一句“已完成”。运行结束时会留下可复验的证据包：任务图、验证报告、修复 Diff、事件记录与交付清单。以下证据来自前端示例运行。</p>
+          </div>
+        </div>
+
+        <div class="evidence-grid">
+          <div class="file-tree" role="tablist" aria-label="证据文件">
+            <button role="tab" aria-selected="true" aria-controls="panel-verification" id="tab-verification" data-tab="verification"><span class="file-dot"></span><span class="file-path">verification/report.json</span><span class="file-kind">JSON</span></button>
+            <button role="tab" aria-selected="false" aria-controls="panel-diff" id="tab-diff" data-tab="diff"><span class="file-dot"></span><span class="file-path">repairs/round-1.diff</span><span class="file-kind">DIFF</span></button>
+            <button role="tab" aria-selected="false" aria-controls="panel-events" id="tab-events" data-tab="events"><span class="file-dot"></span><span class="file-path">events.jsonl</span><span class="file-kind">EVENTS</span></button>
+            <button role="tab" aria-selected="false" aria-controls="panel-hq" id="tab-hq" data-tab="hq"><span class="file-dot"></span><span class="file-path">hq/</span><span class="file-kind">VIEW</span></button>
+            <div class="file-tree-note">证据包随运行结束生成；截图与事件均来自真实执行记录。</div>
+          </div>
+
+          <div class="preview">
+            <div class="preview-head"><span id="preview-path">verification/report.json</span><span class="preview-state">READ-ONLY</span></div>
+            <div class="preview-body" id="panel-verification" role="tabpanel" aria-labelledby="tab-verification">
+              <pre><code><span class="j-key">{</span>
+  <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span>,
+  <span class="j-key">"checks"</span>: [
+    { <span class="j-key">"name"</span>: <span class="j-str">"project-structure"</span>, <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span> },
+    { <span class="j-key">"name"</span>: <span class="j-str">"typescript"</span>, <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span> },
+    { <span class="j-key">"name"</span>: <span class="j-str">"vite-build"</span>, <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span> },
+    { <span class="j-key">"name"</span>: <span class="j-str">"browser.desktop"</span>, <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span> },
+    { <span class="j-key">"name"</span>: <span class="j-str">"browser.mobile"</span>, <span class="j-key">"status"</span>: <span class="j-str">"PASS"</span> }
+  ],
+  <span class="j-key">"routes"</span>: [<span class="j-str">"/report-dashboard"</span>, <span class="j-str">"/report-detail"</span>],
+  <span class="j-key">"viewports"</span>: [<span class="j-str">"desktop"</span>, <span class="j-str">"mobile"</span>],
+  <span class="j-key">"screenshots"</span>: <span class="j-num">4</span>
+<span class="j-key">}</span></code></pre>
+            </div>
+            <div class="preview-body" id="panel-diff" role="tabpanel" aria-labelledby="tab-diff" hidden>
+              <pre><code><span class="d-meta">--- src/pages/report-dashboard.tsx</span>
+<span class="d-meta">+++ src/pages/report-dashboard.tsx</span>
+<span class="d-hunk">@@ -274,7 +274,7 @@</span>
+<span class="d-del">-  MUTATED_数据报表总览</span>
+<span class="d-add">+  数据报表总览</span>
+<span class="d-hunk">@@ -183,5 +183,5 @@</span>
+<span class="d-del">-  metricValue: "CONTRACT_TYPE_MISMATCH"</span>
+<span class="d-add">+  metricValue: 0</span></code></pre>
+            </div>
+            <div class="preview-body" id="panel-events" role="tabpanel" aria-labelledby="tab-events" hidden>
+              <pre><code><span class="e-seq">001</span>  <span class="e-type">run.started</span>          <span class="e-actor">system</span>
+<span class="e-seq">008</span>  <span class="e-fail">verification.failed</span>   <span class="e-actor">T-07 verifier</span>
+<span class="e-seq">009</span>  <span class="e-warn">repair.started</span>        <span class="e-actor">round=1</span>
+<span class="e-seq">010</span>  <span class="e-warn">repair.completed</span>      <span class="e-actor">round=1</span>
+<span class="e-seq">011</span>  <span class="e-type">verification.passed</span>   <span class="e-actor">T-09 verifier</span>
+<span class="e-seq">012</span>  <span class="e-type">delivery.ready</span>        <span class="e-actor">T-10 system</span></code></pre>
+              <p class="preview-note">真实运行记录：5/5 任务，3 轮 Repair，FAIL → FAIL → FAIL → PASS，最终 PASSED · SEQ 59。</p>
+            </div>
+            <div class="preview-body preview-image" id="panel-hq" role="tabpanel" aria-labelledby="tab-hq" hidden>
+              <a class="hq-demo-link" href="demo/hq/index.html" target="_blank" rel="noopener">打开 HQ 实时大屏（纯前端演示）↗</a>
+              <img src="assets/evidence/hq.png" width="1440" height="900" alt="Future Cup HQ 3D 实时大屏真实截图，显示部门进度、Agent 活动与实时事件">
+              <p class="preview-note">上方截图为真实 HQ 运行画面，只读执行视图，不作为任务状态真源。打开的独立演示页为纯前端演示，页面数据为演示数据。</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="evidence-note">代码面板为按真实报告字段整理的阅读视图；原始截图与事件见下方。</p>
+
+        <div class="e2e-strip" aria-label="真实端到端运行记录">
+          <div><span class="e2e-label">REAL E2E · 前端示例</span><span class="e2e-value">2026-11-03</span></div>
+          <div><span class="e2e-label">TASKS</span><span class="e2e-value">5 / 5</span></div>
+          <div><span class="e2e-label">REPAIR</span><span class="e2e-value">3 ROUNDS</span></div>
+          <div><span class="e2e-label">VERIFICATION</span><span class="e2e-value">FAIL ×3 → PASS</span></div>
+          <div><span class="e2e-label">FINAL</span><span class="e2e-value">PASSED · SEQ 59</span></div>
+        </div>
+        <p class="e2e-source">记录来源：<span class="mono">.agents/notes/proposed/feature/2026-10-30-future-cup-web-frontend-agent-platform.zh.md</span> · 单次真实运行观察，不作为性能基准。</p>
+
+        <div class="evidence-thumbs">
+          <figure>
+            <a href="assets/evidence/scheduler.png" target="_blank" rel="noopener"><img src="assets/evidence/scheduler.png" width="1440" height="900" alt="Future Cup 调度决策真实截图，显示候选 Agent、权重得分、淘汰原因与最终选择"></a>
+            <figcaption><strong>图 4</strong> · 可解释调度：候选、权重与淘汰原因</figcaption>
+          </figure>
+          <figure>
+            <a href="assets/evidence/events.png" target="_blank" rel="noopener"><img src="assets/evidence/events.png" width="1440" height="900" alt="Future Cup 事件流真实截图，显示项目级序号、事件类型与时间"></a>
+            <figcaption><strong>图 5</strong> · 事件流：项目级序号与重连</figcaption>
+          </figure>
+          <figure>
+            <a href="assets/evidence/projects.png" target="_blank" rel="noopener"><img src="assets/evidence/projects.png" width="1440" height="1003" alt="Future Cup 项目管理真实截图，显示多个项目的运行状态与事件序号"></a>
+            <figcaption><strong>图 6</strong> · 项目状态与最后事件游标</figcaption>
+          </figure>
+          <figure>
+            <a href="assets/evidence/verification.png" target="_blank" rel="noopener"><img src="assets/evidence/verification.png" width="1210" height="851" alt="Future Cup 验证报告真实截图，显示检查项、状态、路由、视口与截图"></a>
+            <figcaption><strong>图 7</strong> · 验证报告：检查项、路由与视口</figcaption>
+          </figure>
+        </div>
+
+        <div class="mobile-evidence">
+          <div class="mobile-copy">
+            <h3>移动端不是缩小版</h3>
+            <p>DAG、团队、验证与项目状态在移动端重新排布，保留完整信息层级；桌面与移动视口都进入真实浏览器验证。</p>
+            <div class="mobile-links">
+              <a class="text-link" href="assets/evidence/mobile-team.png" target="_blank" rel="noopener">移动端团队 ↗</a>
+              <a class="text-link" href="assets/evidence/mobile-dag.png" target="_blank" rel="noopener">移动端 DAG ↗</a>
+            </div>
+          </div>
+          <div class="phone-frame"><img src="assets/evidence/mobile-team.png" width="390" height="1001" alt="Future Cup 移动端团队页面真实截图"></div>
+          <div class="phone-frame"><img src="assets/evidence/mobile-dag.png" width="390" height="920" alt="Future Cup 移动端任务 DAG 页面真实截图"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="library" id="library" aria-labelledby="library-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="library-title">可推荐，也可冻结</h2>
+          <div class="section-head-aside">
+            <p>团队不是一次性配置。推荐、采用、调整、保存、发布、冻结都留下版本；项目启动时绑定不可变快照，修改模板不会改变已运行项目。</p>
+          </div>
+        </div>
+
+        <div class="library-grid">
+          <div class="dossier">
+            <span class="stamp">FROZEN</span>
+            <div class="dossier-head">
+              <span class="dossier-kicker">TEAM DOSSIER / 示例版本</span>
+              <h3>frontend-ops</h3>
+              <span class="dossier-version">v3.2.0 · PUBLISHED</span>
+            </div>
+            <dl class="spec-table">
+              <div><dt>team_id</dt><dd>team-frontend-ops</dd></div>
+              <div><dt>runtime_members</dt><dd>7</dd></div>
+              <div><dt>frontend_seats</dt><dd>2</dd></div>
+              <div><dt>scope</dt><dd>react-ts-vite-antd</dd></div>
+              <div><dt>tool_allowlist</dt><dd>read · read_image · working_directory</dd></div>
+              <div><dt>memory_policy</dt><dd>requirement · design-decision · failure-signature · accepted-artifact-summary</dd></div>
+              <div><dt>write_scopes</dt><dd>src/pages/** · src/components/** · src/routes/**</dd></div>
+              <div><dt>frozen_hash</dt><dd>冻结时生成</dd></div>
+            </dl>
+            <div class="version-timeline" aria-label="团队版本时间线">
+              <span><i></i>v0.1 草稿</span><span><i></i>v1.0 采用</span><span><i></i>v2.3 调整</span><span class="is-frozen"><i></i>v3.2 冻结</span>
+            </div>
+            <p class="dossier-note">示例版本；字段结构来自真实团队版本。项目启动时冻结；修改模板 = 新版本；已运行项目不受影响。权限上限、能力覆盖与输出契约由确定性规则校验。</p>
+          </div>
+
+          <figure class="plate library-plate">
+            <div class="plate-bar">
+              <span class="bar-item"><span class="bar-label">REGISTRY</span> Agent definitions</span>
+              <span class="bar-item"><span class="bar-label">VERSIONS</span> immutable</span>
+              <span class="bar-item bar-state"><span class="status-dot"></span> PUBLISHED</span>
+            </div>
+            <div class="plate-media">
+              <img src="assets/evidence/agents.png" width="1210" height="1115" alt="Future Cup Agent 管理真实截图，显示角色定义、版本列表、模型、能力与团队引用">
+            </div>
+            <figcaption class="plate-caption">
+              <span><strong>图 8</strong> · Agent Registry：角色、版本、模型与团队引用</span>
+              <span class="caption-source">真实截图 · Future Cup 管理台</span>
+              <a href="assets/evidence/agents.png" target="_blank" rel="noopener">查看原图 ↗</a>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="boundaries" id="boundaries" aria-labelledby="boundaries-title">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="boundaries-title">能力有边界，<br>交付才可信</h2>
+          <div class="section-head-aside">
+            <p>当前示例聚焦一类问题：把自然语言前端需求变成可验证的 React 工程。平台本身是智能体调度；示例之外的能力边界单独评估。把边界写清楚，评审才能判断证据是否成立。</p>
+          </div>
+        </div>
+
+        <div class="boundary-grid">
+          <div class="stack-list">
+            <h3>技术底座</h3>
+            <div class="stack-row"><span class="stack-num">01</span><div><h4>生成栈</h4><p>React · TypeScript · Vite · Ant Design</p></div><p class="stack-note">当前示例只生成这一套栈。Vue、Next.js 与额外技术栈不进入当前示例。</p></div>
+            <div class="stack-row"><span class="stack-num">02</span><div><h4>调度</h4><p>DAG + 能力匹配 + 负载 + 历史成功率</p></div><p class="stack-note">候选、淘汰原因与最终选择都持久化，刷新后仍可重建。</p></div>
+            <div class="stack-row"><span class="stack-num">03</span><div><h4>验证</h4><p>结构 · 依赖 · tsc · build · Playwright</p></div><p class="stack-note">桌面与移动视口；控制台错误与失败请求可阻止 PASS。</p></div>
+            <div class="stack-row"><span class="stack-num">04</span><div><h4>自愈</h4><p>失败签名 + 策略 + 最小 Diff + 复验</p></div><p class="stack-note">最多 3 轮；重复失败或无进展进入 ESCALATED。</p></div>
+          </div>
+
+          <div class="roadmap-list-wrap">
+            <h3>未来决赛实现</h3>
+            <ul class="roadmap-list">
+              <li><span class="roadmap-mark" aria-hidden="true"></span>MCP Server / Client<span class="roadmap-tag">决赛计划</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>A2A<span class="roadmap-tag">后续评估</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>RAG / 向量数据库<span class="roadmap-tag">决赛计划</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>受控工具扩展<span class="roadmap-tag">后续评估</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>可视化拖拽编排器<span class="roadmap-tag">后续评估</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>受控团队模板复用（非通用 Agent 市场）<span class="roadmap-tag">已具备基础</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>受控后端接口扩展<span class="roadmap-tag">后续评估</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>多租户与用量计费<span class="roadmap-tag">后续评估</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>并发与长稳压测<span class="roadmap-tag">决赛计划</span></li>
+              <li><span class="roadmap-mark" aria-hidden="true"></span>容器化执行隔离<span class="roadmap-tag">后续评估</span></li>
+            </ul>
+            <p class="roadmap-note">以下能力进入决赛阶段实现与评估；初赛版本不将其计入已实现能力。Docker / SWE-ReX 已完成隔离评估，尚未接入主运行链路。</p>
+          </div>
+        </div>
+
+        <div class="ai-strip">
+          <div><span class="ai-label">LLM 驱动</span><p>规划、设计、页面实现、集成、测试规格与修复。</p></div>
+          <div><span class="ai-label">确定性执行</span><p>DAG 调度评分、Verifier 检查、失败签名与阈值判定。</p></div>
+          <div><span class="ai-label">硬边界</span><p>Agent 的自然语言回复不能在没有执行证据时宣布成功。</p></div>
+        </div>
+
+        <div class="tech-origin" id="tech-origin">
+          <span class="tech-origin-label">技术来源</span>
+          <p><strong>Future Cup 是独立项目，非 DeepSeek 官方产品。</strong>“基于 DeepSeek Harness 构建”指使用 DeepSeek Harness 作为 Agent 运行时、会话与工具执行底座；Agent 团队注册、DAG 调度、浏览器验证、自适应自愈与平台管理界面由 Future Cup 自研。DeepSeek Harness 是深度求索公司的注册商标。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="cta" aria-labelledby="cta-title">
+      <div class="container">
+        <div class="cta-grid">
+          <h2 id="cta-title">把下一次交付，<br>变成可复验的<br>运行记录。</h2>
+          <div class="cta-copy">
+            <p>从一句话需求开始，留下一整条可以回放、可以复验的执行链。</p>
+            <div class="cta-actions">
+              <a class="btn btn-paper" href="#execution">查看完整执行</a>
+              <a class="btn btn-outline" href="#boundaries">查看技术边界</a>
+              <a class="btn btn-outline" href="demo/hq/index.html" target="_blank" rel="noopener">打开 HQ 大屏</a>
+              <button class="btn btn-outline" type="button" disabled aria-describedby="cta-note">进入平台 · 演示地址待提供</button>
+            </div>
+            <p class="cta-note" id="cta-note">HQ 为纯前端演示，页面数据为演示数据；完整平台演示地址与联系方式待提供。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <span class="footer-title">FUTURE CUP</span>
+        <p>智能体调度平台 · 以前端智能体团队为示例<br>从需求到可验证的工程交付</p>
+      </div>
+      <nav class="footer-nav" aria-label="页脚导航">
+        <a href="#execution">执行主线</a>
+        <a href="#team">Agent 编制</a>
+        <a href="#repair">验证与自愈</a>
+        <a href="#evidence">证据</a>
+        <a href="#library">团队库</a>
+        <a href="#boundaries">技术边界</a>
+      </nav>
+      <div class="footer-legal">
+        <p><a href="#tech-origin">基于 DeepSeek Harness 构建</a>：独立项目，非 DeepSeek 官方产品。Harness 提供 Agent 运行时与工具执行底座；调度、验证、自愈与平台层由 Future Cup 自研。</p>
+        <p>界面截图来自 Future Cup 管理台真实运行。HQ 大屏遵循 PolyForm Noncommercial 1.0.0，Required Notice: Copyright (c) 2026 赛博老爸。</p>
+        <p class="footer-placeholder">Logo / 域名 / 演示地址 / 联系方式待补充。</p>
+        <p>© 2026 Future Cup</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
