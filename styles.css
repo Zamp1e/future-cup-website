@@ -304,6 +304,45 @@ button {
   display: none;
 }
 
+.nav-github {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.site-nav .nav-github {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-2);
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.site-nav .nav-github::after {
+  display: none;
+}
+
+.site-nav .nav-github svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.site-nav .nav-github:hover,
+.site-nav .nav-github:focus-visible {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.nav-github .github-label {
+  display: none;
+}
+
+
 .menu-toggle {
   display: none;
   align-items: center;
@@ -2476,6 +2515,31 @@ section[id] {
     color: var(--ink);
     font-weight: 700;
     text-align: center;
+  }
+
+  .site-nav .nav-github {
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 13px 0;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .site-nav .nav-github svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .site-nav .nav-github .github-label {
+    display: inline;
+    font-size: 14px;
+  }
+
+  .site-nav .nav-github:hover {
+    background: transparent;
+    color: var(--ink);
   }
 
   .run-body {
