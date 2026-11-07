@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .impeccable/
+.workbuddy/
+.tmp-cp-test/
+.DS_Store

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import { cpSync, mkdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,11 +10,16 @@ export default defineConfig({
   plugins: [
     {
       name: 'copy-evidence-originals',
-      closeBundle() {
+      generateBundle() {
         const source = resolve(root, 'assets/evidence')
-        const target = resolve(root, 'dist/assets/evidence')
-        mkdirSync(target, { recursive: true })
-        cpSync(source, target, { recursive: true })
+        for (const file of readdirSync(source)) {
+          if (!/\.(png|jpe?g|svg|md)$/i.test(file)) continue
+          this.emitFile({
+            type: 'asset',
+            fileName: `assets/evidence/${file}`,
+            source: readFileSync(resolve(source, file)),
+          })
+        }
       },
     },
   ],
