@@ -322,7 +322,9 @@ button {
 }
 
 .site-nav .nav-github::after {
-  display: none;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
 }
 
 .site-nav .nav-github svg {
@@ -333,9 +335,8 @@ button {
 
 .site-nav .nav-github:hover,
 .site-nav .nav-github:focus-visible {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+  background: transparent;
+  color: var(--ink);
 }
 
 .nav-github .github-label {
