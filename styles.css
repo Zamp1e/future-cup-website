@@ -314,17 +314,10 @@ button {
 
 .site-nav .nav-github {
   width: 34px;
-  height: 34px;
+  height: 28px;
   padding: 0;
-  border: 1px solid var(--rule-strong);
   color: var(--ink-2);
-  transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
-}
-
-.site-nav .nav-github::after {
-  right: -1px;
-  bottom: -1px;
-  left: -1px;
+  transition: color 180ms ease;
 }
 
 .site-nav .nav-github svg {
@@ -335,7 +328,6 @@ button {
 
 .site-nav .nav-github:hover,
 .site-nav .nav-github:focus-visible {
-  background: transparent;
   color: var(--ink);
 }
 
