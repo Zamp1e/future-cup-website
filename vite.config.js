@@ -20,6 +20,19 @@ export default defineConfig({
             source: readFileSync(resolve(source, file)),
           })
         }
+        // 舞台脚本以普通 defer 引入（保证 file:// 也能运行），Vite 不会自动处理，手动复制进产物
+        this.emitFile({
+          type: 'asset',
+          fileName: 'app.js',
+          source: readFileSync(resolve(root, 'app.js')),
+        })
+        // OG / Twitter 的 content="assets/og.png" 写在 meta 里，Vite 不处理该属性，
+        // 不手动复制会让线上分享预览图 404
+        this.emitFile({
+          type: 'asset',
+          fileName: 'assets/og.png',
+          source: readFileSync(resolve(root, 'assets/og.png')),
+        })
       },
     },
   ],
