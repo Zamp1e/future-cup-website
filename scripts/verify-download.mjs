@@ -1,7 +1,7 @@
 import { launchBrowser } from './launch-browser.mjs'
 
 const base = 'http://127.0.0.1:4173/'
-const INSTALLER = 'https://github.com/tangrui13131/ruiruiai/releases/download/v1.4.5/FutureCup-Setup-x64.exe'
+const INSTALLER = 'https://github.com/tangrui13131/ruiruiai/releases/download/v3.0.2/Future.Cup.Setup.3.0.2.exe'
 const results = []
 const check = (name, pass, detail = '') => {
   results.push({ name, pass })
@@ -12,10 +12,10 @@ const browser = await launchBrowser()
 
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })
 // 不真连 GitHub：用带 Content-Disposition 的桩响应触发下载
-await ctx.route(/FutureCup-Setup-x64\.exe/, (route) => route.fulfill({
+await ctx.route(/ruiruiai\/releases\/download\//, (route) => route.fulfill({
   status: 200,
   contentType: 'application/octet-stream',
-  headers: { 'Content-Disposition': 'attachment; filename="FutureCup-Setup-x64.exe"' },
+  headers: { 'Content-Disposition': 'attachment; filename="Future.Cup.Setup.3.0.2.exe"' },
   body: Buffer.from('MZfake-exe-for-test'),
 }))
 
@@ -123,7 +123,7 @@ check('下载发生在回弹峰值之后', log.clicks.length === 1 && log.clicks
 check('下载时动画已播完（缩放已清除）', log.clicks.length === 1 && log.clicks[0].press === '',
   log.clicks.length ? `press=[${log.clicks[0].press}]` : '未触发')
 check('触发的是下载而非新标签跳转', log.clicks.length === 1 &&
-  log.clicks[0].filename === 'FutureCup-Setup-x64.exe' && log.clicks[0].href === INSTALLER)
+  log.clicks[0].filename === 'Future.Cup.Setup.3.0.2.exe' && log.clicks[0].href === INSTALLER)
 await page.mouse.move(700, 700)
 await page.waitForFunction(() => getComputedStyle(document.querySelector('.btn-download')).scale === '1', null, { timeout: 2500 })
 check('移开指针后精确回到 100%', (await scaleDl()) === '1' && !(await pressDl()), `scale=${await scaleDl()}`)
@@ -151,9 +151,9 @@ check('按住拖出：回弹且不下载',
 
 // 5. reduced motion：直接下载，无缩放
 const rm = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', acceptDownloads: true })
-await rm.route(/FutureCup-Setup-x64\.exe/, (route) => route.fulfill({
+await rm.route(/ruiruiai\/releases\/download\//, (route) => route.fulfill({
   status: 200, contentType: 'application/octet-stream',
-  headers: { 'Content-Disposition': 'attachment; filename="FutureCup-Setup-x64.exe"' },
+  headers: { 'Content-Disposition': 'attachment; filename="Future.Cup.Setup.3.0.2.exe"' },
   body: Buffer.from('MZfake-exe-for-test'),
 }))
 const rp = await rm.newPage()

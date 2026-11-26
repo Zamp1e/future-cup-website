@@ -90,7 +90,7 @@ npm run build
 
 ### 「立即下载」按钮
 
-首屏 CTA 旁新增一个下载入口，指向 `https://github.com/tangrui13131/ruiruiai/releases/download/v1.4.5/FutureCup-Setup-x64.exe`（2026-11-14 由 v1.4.6 的 zip 换为 v1.4.5 的 Windows 安装包）。
+首屏 CTA 旁新增一个下载入口，指向 `https://github.com/tangrui13131/ruiruiai/releases/download/v3.0.2/Future.Cup.Setup.3.0.2.exe`（2026-11-26 由 v1.4.5 的 `FutureCup-Setup-x64.exe` 换成 v3.0.2 安装包；文件名带版本号，发新版时要同步改这里和 `data-download`）。
 
 - 直接复用 `.btn-primary` 的几何、字号、内边距与弹簧交互（`bindPressLinks()` 自动接管）；`.btn-download` 只把配色改成白底次按钮，与黑色主 CTA 形成截图里的主次层级。圆角、内边距、字号、96% 按压与 1.048 弹簧回弹仍与主 CTA 一致。
 - 用 `data-build="download"` 参与建造揭示态，并在 `runBuild()` 里与主 CTA **同组并发**走同一套光标编舞：`frameOut` 画框 → `settle` 落位 → `pressButton` 点一下（桌面第三组、移动端第二组，移动端白名单也加了 `download`）。这套流程抽成共用函数 `buildButton(key)`，两个分支不再重复；`total` 由 `schedule.reduce` 自动计算，增加一个并发任务不改组时长。
