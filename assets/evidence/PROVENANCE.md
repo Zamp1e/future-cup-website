@@ -24,7 +24,7 @@
 
 以上三张为 2026-11-06 平台移动端真机截图，未经二次绘制；早期绘制示意 `mobile-team.png` / `mobile-dag.png` 已由这三张替换并从站点移除。
 
-平台入口：`https://www.tangruirui.space/`（官网头部、首屏、移动端导航、结尾 CTA 与页脚均指向该地址，新窗口打开）。
+平台入口：`https://futurecup.tangruirui.space/`（官网头部、首屏、移动端导航、结尾 CTA 与页脚均指向该地址，新窗口打开；2026-11-26 起由 `https://www.tangruirui.space/` 切到该域名）。
 
 站点品牌标识为站内联绘制 SVG（六边形标识），`site/assets/favicon.svg` 为站点自绘 favicon；不用外部图片做 logo。
 

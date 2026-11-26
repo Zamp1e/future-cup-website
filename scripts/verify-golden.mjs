@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 
 const base = 'http://127.0.0.1:4173/'
 const PHI = 1.618
@@ -8,9 +8,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
 const widths = [1440, 1400, 1366, 1320, 1280, 1240, 1200, 1180, 1140, 1100, 1060, 1001]
 const errors = []
@@ -47,7 +45,7 @@ for (const w of widths) {
   minRatio = Math.min(minRatio, r.ratio)
   maxRatio = Math.max(maxRatio, r.ratio)
 
-  const ok = Math.abs(r.ratio - PHI) < .01 && r.radius === '14px' && r.gap >= 20 &&
+  const ok = Math.abs(r.ratio - PHI) < .01 && r.radius === '16px' && r.gap >= 20 &&
              r.svgH >= 75 && !r.overflowY && r.scrollW <= w + 1 && r.footVisible && r.viewBox === '0 0 520 126'
   check(`${w}px：φ / 圆角 / 间隙 / DAG / 无溢出`, ok,
     `φ=${r.ratio.toFixed(3)} 圆角=${r.radius} 间隙=${Math.round(r.gap)}px DAG=${Math.round(r.svgH)}px 底部=${r.footVisible ? '完整' : '被裁'}`)

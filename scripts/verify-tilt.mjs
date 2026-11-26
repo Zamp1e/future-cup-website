@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -12,9 +12,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const page = await ctx.newPage()
@@ -112,16 +110,16 @@ await page.evaluate(() => {
 })
 check('触摸抬起关闭流光', (await inline('--sheen', '#build-panel')) === '0')
 
-// 主题联动：两个主题的流光配色不同
-const inkSheen = await css('--sheen-core', ':root')
-await page.locator('#theme-toggle').click()
-await page.waitForTimeout(450)
-const paperSheen = await css('--sheen-core', ':root')
-check('浅色主题使用不同的流光配色', inkSheen !== paperSheen && paperSheen.length > 0, `${inkSheen} → ${paperSheen}`)
+// 单主题：流光用暖白高光 + 靛蓝中段
+const sheenCore = await css('--sheen-core', ':root')
+const sheenMid = await css('--sheen-mid', ':root')
+check('流光配色为单主题暖白 + 钢蓝',
+  sheenCore.includes('255, 255, 255') && sheenMid.includes('59, 106, 156'),
+  `${sheenCore} / ${sheenMid}`)
 await page.mouse.move(px, py, { steps: 5 })
 await page.waitForTimeout(400)
 await page.screenshot({
-  path: resolve(out, 'tilt-paper.png'),
+  path: resolve(out, 'tilt-light.png'),
   clip: { x: Math.max(0, box.x - 34), y: Math.max(0, box.y - 44), width: box.width + 68, height: box.height + 88 },
 })
 

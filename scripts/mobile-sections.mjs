@@ -1,6 +1,6 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 import { resolve } from 'node:path'
-const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const browser = await launchBrowser()
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
 await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(700)

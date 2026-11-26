@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -12,9 +12,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
 // 记录两个按钮在建造过程中的 class 变化时间线
 const installLog = () => {

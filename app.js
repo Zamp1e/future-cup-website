@@ -14,9 +14,10 @@
   const mobile = () => window.innerWidth < 640;
 
   const ROLES = ['PLANNER', 'UI DESIGNER', 'TESTER', 'FRONTEND A', 'FRONTEND B', 'INTEGRATION', 'REPAIR', 'VERIFIER'];
-  const COLORS = ['#5873F2', '#9E90F0', '#7FD9C8', '#FF8A5C', '#FFC94A', '#F26D9B', '#4FC3F7', '#A8E57C',
-    '#F2EFE7', '#FF8A72', '#B79BFF', '#36D6C3', '#FFB55C', '#8FD0FF', '#E3B7FF', '#9BE8A0',
-    '#FF9DB0', '#7BC8FF', '#FFD479', '#B0F0E4', '#C7A6FF', '#FFAE8F', '#8DE0A8', '#F5A9E1'];
+  // 与平台工作台同一套冷调色板：钢蓝 / 青 / 绿 / 少量橙色信号
+  const COLORS = ['#3b6a9c', '#2f5f8f', '#4f7396', '#2b6777', '#2f7a6e', '#2f7d5b', '#4b6a5d', '#5f7a3f',
+    '#6b5b95', '#5a6b8c', '#7a5f9e', '#b45309', '#9c5f2f', '#8a6a3a', '#c2410c', '#a35f5f',
+    '#4f5d8c', '#3d5a80', '#556b87', '#6d597a', '#3f6b6b', '#7c8b5f', '#8c5f5f', '#476b4f'];
   const SHAPES = {
     arrow: '<path d="M4 2.5 L4 20 L8.6 16 L11.6 22 L14.4 20.6 L11.4 14.8 L17 14.4 Z" fill="currentColor" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>',
     cross: '<g stroke="#fff" stroke-width="3.6" stroke-linecap="round"><path d="M12 3 V21 M3 12 H21"/></g><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3 V21 M3 12 H21"/></g>',
@@ -33,28 +34,48 @@
   const hudState = $('#hud-state');
   const hudBar = $('#hud-bar');
   const hudCount = $('#hud-count');
+  const hudStage = $('#hud-stage');
 
   const easeInOut = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
   const rectOf = (el) => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
   const build = (k) => $(`[data-build="${k}"]`);
 
-  // head 内联脚本已在首屏前把主题写到 <html data-theme>，这里沿用，避免刷新闪回默认墨色
-  const THEME_DEFAULT = doc.dataset.theme === 'paper' ? 'paper' : 'ink';
+  // 只保留动效偏好：速度与光标数量；旧的 theme 键即使留在 localStorage 里也会被忽略
   let CFG;
-  try { CFG = Object.assign({ theme: THEME_DEFAULT, speed: 1.5, agents: 14 }, JSON.parse(localStorage.getItem('fc-stage') || '{}')); }
-  catch (e) { CFG = { theme: THEME_DEFAULT, speed: 1.5, agents: 14 }; }
-  if (CFG.theme !== 'ink' && CFG.theme !== 'paper') CFG.theme = THEME_DEFAULT;
+  try { CFG = Object.assign({ speed: 1.5, agents: 14 }, JSON.parse(localStorage.getItem('fc-stage') || '{}')); }
+  catch (e) { CFG = { speed: 1.5, agents: 14 }; }
+  delete CFG.theme;
   const saveCfg = () => { try { localStorage.setItem('fc-stage', JSON.stringify(CFG)); } catch (e) { /* file:// 下忽略 */ } };
 
   const mouse = { x: 0, y: 0, active: false };
-  let cursors = [], gen = 0, done = 0, total = 1, time = 0, last = 0, running = false;
+  let cursors = [], gen = 0, done = 0, total = 1, time = 0, last = 0, running = false, resting = false;
+  let quietTimer = 0, lastWake = 0;
+  let dockTimer = 0;
+  let demoAnims = [];
+
+  /* 原版（latest-site）的力场参数都由常量直接写在 loop 里，这里不再单独配置 */
+
+  /* 静止时光标标签降到低透明度，避免一屏深色标签盖住正文；指针一动就恢复 */
+  function quietAll() {
+    cursors.forEach((c) => c.el.classList.add('is-quiet'));
+  }
+
+  function wakeAll() {
+    if (resting || !running) return;
+    const now = performance.now();
+    if (now - lastWake < 150) return;
+    lastWake = now;
+    cursors.forEach((c) => c.el.classList.remove('is-quiet'));
+    clearTimeout(quietTimer);
+    quietTimer = setTimeout(quietAll, 2200);
+  }
 
   /* ------------------------------------------------------------- 光标群 */
 
   function makeCursor(i) {
     const el = document.createElement('div');
-    el.className = 'cursor';
+    el.className = 'cursor is-quiet';
     el.style.setProperty('--c', COLORS[i % COLORS.length]);
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
@@ -86,19 +107,20 @@
       c.x = left ? -60 - Math.random() * 240 : window.innerWidth + 60 + Math.random() * 240;
       c.y = Math.random() * window.innerHeight;
       c.vx = c.vy = 0; c.busy = false;
-      c.el.classList.remove('is-quiet');
       setShape(c, 'arrow');
     });
   }
 
   function loop(now) {
+    if (!running) return;
     const dt = Math.min(.04, (now - (last || now)) / 1000);
     last = now; time += dt;
     const cx = mouse.active ? mouse.x : window.innerWidth * .5 + Math.sin(time * .32) * window.innerWidth * .18;
     const cy = mouse.active ? mouse.y : window.innerHeight * .46 + Math.cos(time * .27) * window.innerHeight * .13;
-
     for (const c of cursors) {
       if (!c.busy) {
+        /* 原版（latest-site）力场：径向弹簧把光标拉回自己的轨道半径，切向力让它绕着指针转，
+           40px 内互相排斥，66px 内避开真实指针——没有邻域对齐与聚合。 */
         const dx = c.x - cx, dy = c.y - cy, d = Math.hypot(dx, dy) || 1;
         const nx = dx / d, ny = dy / d;
         const rr = c.orbit + 24 * Math.sin(time * .8 + c.phase);
@@ -118,6 +140,10 @@
         const sp = Math.hypot(c.vx, c.vy);
         if (sp > 820) { c.vx *= 820 / sp; c.vy *= 820 / sp; }
         c.x += c.vx * dt; c.y += c.vy * dt;
+
+        // 标签朝鸟群外侧排布：左半边贴左、上半边贴上，减少聚集时的叠字
+        c.el.classList.toggle('is-left', c.x < cx - 2 && c.x > 150);
+        c.el.classList.toggle('is-up', c.y < cy - 2 && c.y > 80);
       }
       c.el.style.transform = `translate3d(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px,0)`;
     }
@@ -295,8 +321,15 @@
   async function withCursor(fn) {
     const c = take();
     c.busy = true;
+    c.el.classList.remove('is-quiet', 'is-left', 'is-up');
     try { await fn(c); }
-    finally { c.busy = false; done++; hudBar.style.width = Math.min(100, done / total * 100) + '%'; }
+    finally {
+      c.busy = false;
+      c.vx = 0; c.vy = 0;          // 编舞结束后从静止交还给鸟群，避免旧速度造成跳变
+      c.el.classList.add('is-quiet');
+      done++;
+      hudBar.style.width = Math.min(100, done / total * 100) + '%';
+    }
   }
 
   const stagger = (ms, fn) => async (c) => { await wait(ms); await fn(c); };
@@ -392,6 +425,143 @@
     cursors.forEach((c) => { c.busy = false; });
   }
 
+  /* ------------------------------------------------------------- 谢幕收尾 */
+
+  function startLoop() {
+    if (running) return;
+    running = true; last = 0;
+    requestAnimationFrame(loop);
+  }
+
+  // 停在 CTA 上的哨兵：不参与鸟群、不再移动，只作为「团队还在」的静态记号
+  function parkSentinel() {
+    const old = overlay.querySelector('.is-sentinel');
+    if (old) old.remove();
+    const el = build('cta');
+    if (!el) return;
+    const r = rectOf(el);
+    if (r.w < 2) return;
+    const s = document.createElement('div');
+    s.className = 'cursor is-sentinel';
+    s.style.setProperty('--c', COLORS[3]);
+    s.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${SHAPES.arrow}</svg>`;
+    s.style.transform = `translate3d(${(r.x + r.w - 6).toFixed(1)}px,${(r.y + r.h - 8).toFixed(1)}px,0)`;
+    overlay.appendChild(s);
+  }
+
+  /* 待命：谢幕不把队伍收没，而是缩进 HUD 的 LIVE 栏里缓慢游动。
+     游动交给 CSS 动画，主线程保持空闲——一个装饰动画不该让整页永不掉帧。 */
+  function dockStop() {
+    clearTimeout(dockTimer);
+    cursors.forEach((c) => c.el.classList.remove('is-dock'));
+  }
+
+  function startDock() {
+    cursors.forEach((c) => c.el.classList.remove('is-dock'));
+    if (!hudStage) return;
+    const r = hudStage.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
+    const pad = 2;
+    const zone = { x: r.left + pad, y: r.top + pad, w: r.width - pad * 2, h: r.height - pad * 2 };
+    const n = Math.min(cursors.length, mobile() ? 3 : 6);
+    const slot = zone.w / n;
+    const half = 5.3;                                    // 24px 图标缩到 .44 之后的半宽，用来居中对齐栏位
+    cursors.forEach((c, i) => {
+      if (i >= n) { c.el.style.opacity = '0'; return; }  // 栏里挤不下的先退场
+      c.el.style.opacity = '';
+      c.el.style.setProperty('--dx', Math.min(3.5, slot / 2.8).toFixed(2) + 'px');
+      c.el.style.setProperty('--dy', Math.max(1.5, zone.h / 2 - 5).toFixed(2) + 'px');
+      c.el.style.setProperty('--dur', (6.5 + (i % 4) * 1).toFixed(2) + 's');
+      c.el.style.setProperty('--delay', (-(i * 1.9)).toFixed(2) + 's');   // 错开相位，避免整排同呼吸
+      c.el.style.transform =
+        `translate3d(${(zone.x + (i + .5) * slot - half).toFixed(1)}px,${(zone.y + zone.h / 2 - half).toFixed(1)}px,0) scale(.44)`;
+      c.el.classList.add('is-dock');
+    });
+  }
+
+  // 待命栏的宽度是过渡出来的，等它落定再量
+  function dockAfterRest() {
+    clearTimeout(dockTimer);
+    dockTimer = setTimeout(() => { if (resting) startDock(); }, 420);
+  }
+
+  /* 哨兵在 CTA 上连点两下：光标用弹簧压一下再弹回，按钮同步按下。
+     走 Web Animations 而不是 CSS animation——一旦用 animation 简写盖掉
+     [data-build].is-built 的 build-in 揭示动画，撤掉时 build-in 会重播，按钮会闪一下白。
+     纯视觉演示，不触发跳转；两轮结束后自然回到真实的 hover / press。 */
+  function demoClick() {
+    const s = overlay.querySelector('.is-sentinel');
+    const cta = build('cta');
+    if (!s || !cta || reduced) return;
+    const svg = s.querySelector('svg');
+    if (!svg) return;
+    const opts = { duration: 780, delay: 450, iterations: 2 };
+    const click = (press, over, settle, breathe) => [
+      { offset: 0, scale: '1', easing: 'ease-in-out' },
+      { offset: .13, scale: press, easing: 'ease-in-out' },
+      { offset: .32, scale: over, easing: 'ease-in-out' },
+      { offset: .5, scale: settle, easing: 'ease-in-out' },
+      { offset: .66, scale: breathe, easing: 'ease-in-out' },
+      { offset: .8, scale: '1' },
+      { offset: 1, scale: '1' },
+    ];
+    demoAnims.forEach((a) => { try { a.cancel(); } catch (e) { /* 已结束 */ } });
+    demoAnims = [
+      svg.animate(click('.78', '1.07', '.97', '1.015'), opts),
+      cta.animate(click('.96', '1.022', '.997', '1.006'), opts),
+    ];
+  }
+
+  /* 一次性谢幕：顿一下 → 汇入底部 HUD → 缩进待命栏 → 停鸟群 → 留哨兵。
+     结束后运动只剩两处：栏里缓慢游动的几个小光标，和 LIVE 前那颗 6px 呼吸点。 */
+  async function curtain() {
+    if (resting) return;
+    resting = true;
+    layer.classList.add('is-docked');      // 提前抬层级：汇入时要从胶囊前面进去，而不是被它盖住
+    cursors.forEach((c) => { c.busy = true; });
+    running = false;                       // 先停鸟群，免得它覆盖汇入时的 transform
+    await wait(160);                       // 这个顿点才是句号，否则像被掐断
+    if (cursors.length) {
+      const r = hud.getBoundingClientRect();
+      const tx = r.left + r.width / 2, ty = r.top + r.height / 2;
+      const from = cursors.map((c) => ({ x: c.x, y: c.y }));
+      const n = cursors.length;
+      await tween(720, (t) => {
+        cursors.forEach((c, i) => {
+          const q = Math.max(0, Math.min(1, (t - (i / n) * .18) / .82));   // 依次汇入
+          const e = easeInOut(q);
+          const a = (i / n) * 6.283;                                     // 落在栏内一小圈上，免得叠成一坨
+          const gx = tx + Math.cos(a) * 7, gy = ty + Math.sin(a) * 5;
+          c.x = from[i].x + (gx - from[i].x) * e;
+          c.y = from[i].y + (gy - from[i].y) * e;
+          c.el.style.transform =
+            `translate3d(${c.x.toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${(1 - .58 * e).toFixed(3)})`;
+        });
+      });
+      if (!resting) return;                // 期间被重播打断
+    }
+    layer.classList.add('is-docked');
+    hud.classList.add('is-rest');
+    parkSentinel();
+    doc.dataset.stage = 'live';
+    body.classList.remove('is-locked');
+    quietAll();
+    dockAfterRest();
+    demoClick();
+  }
+
+  // 不播谢幕的路径（减少动效 / 生成中改窗口）：直接落到待命态
+  function settleInstant() {
+    resting = true;
+    running = false;
+    dockStop();
+    layer.classList.remove('is-off');
+    layer.classList.add('is-docked');
+    hud.classList.add('is-rest');
+    parkSentinel();
+    dockAfterRest();
+  }
+
   async function showAll() {
     gen++;
     doc.dataset.stage = 'live';
@@ -405,12 +575,23 @@
     hudBar.style.width = '100%';
     hudCount.textContent = String(CFG.agents);
     panelFinish();
+    settleInstant();
+    quietAll();
   }
 
   async function runBuild() {
     gen++;
     const g = gen;
     done = 0;
+    // 从待命态重入（Tweaks 改数量 / 按 R 重播）：把队伍从 LIVE 栏里放出来
+    resting = false;
+    dockStop();
+    demoAnims.forEach((a) => { try { a.cancel(); } catch (e) { /* 已结束 */ } });
+    demoAnims = [];
+    layer.classList.remove('is-off', 'is-docked');
+    hud.classList.remove('is-rest');
+    cursors.forEach((c) => { c.el.style.opacity = ''; });
+    startLoop();
     overlay.innerHTML = '';
     blueprint.classList.remove('is-ruling');
     doc.dataset.stage = 'building';
@@ -429,6 +610,7 @@
     if (isSmall || !panelVisible()) panelFinish(); else panelReset();
     syncCursors(isSmall ? Math.min(8, CFG.agents) : CFG.agents);
     scatter();
+    quietAll();
 
     // 桌面：完整编舞；移动端：只建造三行标题与按钮，其余直接呈现
     const schedule = [];
@@ -486,12 +668,11 @@
     overlay.innerHTML = '';
     $$('[data-build]').forEach((el) => { el.classList.remove('is-typing'); el.classList.add('is-built'); });
     $('#hero-rule').style.width = '';
-    doc.dataset.stage = 'live';
-    body.classList.remove('is-locked');
     hud.classList.add('is-live');
     hudState.textContent = 'LIVE';
     hudBar.style.width = '100%';
     panelFinish();
+    await curtain();                       // 内容落定后再谢幕，最后才切到 live
   }
 
   /* ------------------- 右侧卡片：指针跟随 3D 倾斜 + 径向流光 + 弹簧回正 */
@@ -502,9 +683,11 @@
     const slot = wrap && wrap.parentElement;
     if (!wrap || !panel || !slot || reduced) return;
 
-    const MAX_TILT = 11;     // 最大倾角（度）
-    const STIFFNESS = .16;   // 弹簧刚度（约 14% 过冲 / 0.6s 收敛）
-    const DAMPING = .68;     // 阻尼系数（<1，回正时带阻力回弹）
+    const MAX_TILT = 11;        // 最大倾角（度）
+    const OUTER_ZONE = 112;     // 卡片外框再往外扩的触发距离
+    const INNER_FLOOR = .22;    // 进入卡片后，中心仍保留的倾斜比例
+    const STIFFNESS = .16;      // 弹簧刚度（约 14% 过冲 / 0.6s 收敛）
+    const DAMPING = .68;        // 阻尼系数（<1，回正时带阻力回弹）
     const s = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0 };
     let raf = 0, hovering = false;
 
@@ -516,7 +699,10 @@
 
     function frame() {
       // 建造动画期间强制回正：选框测量基于 getBoundingClientRect，倾斜会让它偏移
-      if (doc.dataset.stage === 'building') { s.tx = 0; s.ty = 0; }
+      if (doc.dataset.stage === 'building') {
+        if (hovering) release();
+        s.tx = 0; s.ty = 0;
+      }
       s.vx = (s.vx + (s.tx - s.x) * STIFFNESS) * DAMPING;
       s.vy = (s.vy + (s.ty - s.y) * STIFFNESS) * DAMPING;
       s.x += s.vx;
@@ -534,16 +720,46 @@
       raf = requestAnimationFrame(frame);
     }
 
+    /*
+     * 外扩触发区：卡片外 112px 内开始倾斜，越靠近卡片越深，到视觉边框达到最大值；
+     * 进入卡片后按「离最近边的距离」递减，中心保留 22%。
+     * 用窗口指针坐标而不是 pointerenter/pointerleave，避免卡片抬升改变命中区导致边缘抖动。
+     */
+    function zoneOf(x, y) {
+      const r = slot.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return null;
+      const hw = r.width / 2, hh = r.height / 2;
+      const dx = x - (r.left + hw), dy = y - (r.top + hh);
+      const outsideX = Math.max(0, Math.abs(dx) - hw);
+      const outsideY = Math.max(0, Math.abs(dy) - hh);
+      const outside = Math.hypot(outsideX, outsideY);
+      if (outside > OUTER_ZONE) return null;
+
+      let strength;
+      if (outside > 0) {
+        strength = 1 - outside / OUTER_ZONE;              // 外扩区：0 → 1
+      } else {
+        const edge = Math.min(1 - Math.abs(dx) / hw, 1 - Math.abs(dy) / hh);
+        strength = INNER_FLOOR + (1 - INNER_FLOOR) * (1 - Math.max(0, Math.min(1, edge)));
+      }
+
+      return {
+        nx: Math.max(-1, Math.min(1, dx / hw)),
+        ny: Math.max(-1, Math.min(1, dy / hh)),
+        strength,
+      };
+    }
+
     function track(e) {
       if (doc.dataset.stage === 'building') { if (hovering) release(); return; }
-      // 用未倾斜的父容器做基准，避免自身 transform 造成反馈抖动
-      const r = slot.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) return;
-      const nx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2)));
-      const ny = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2)));
-      s.tx = nx; s.ty = ny;
-      panel.style.setProperty('--mx', `${((nx + 1) * 50).toFixed(2)}%`);
-      panel.style.setProperty('--my', `${((ny + 1) * 50).toFixed(2)}%`);
+      const z = zoneOf(e.clientX, e.clientY);
+      if (!z) { if (hovering) release(); return; }
+      s.tx = z.nx * z.strength;
+      s.ty = z.ny * z.strength;
+      panel.style.setProperty('--mx', `${((z.nx + 1) * 50).toFixed(2)}%`);
+      panel.style.setProperty('--my', `${((z.ny + 1) * 50).toFixed(2)}%`);
+      // 抬升也随接近程度平滑增长，避免在触发区外缘突然放大
+      wrap.style.setProperty('--lift', (1 + .016 * z.strength).toFixed(4));
       panel.style.setProperty('--sheen', '1');
       hovering = true;
       wrap.classList.add('is-active', 'is-hover');
@@ -551,38 +767,56 @@
     }
 
     function release() {
+      if (!hovering) return;
       hovering = false;
       s.tx = 0; s.ty = 0;
       wrap.classList.remove('is-hover');
+      wrap.style.removeProperty('--lift');
       panel.style.setProperty('--sheen', '0');
       kick();
     }
 
-    wrap.addEventListener('pointerenter', track);
-    wrap.addEventListener('pointermove', track);
-    wrap.addEventListener('pointerdown', track);
-    wrap.addEventListener('pointerup', (e) => { if (e.pointerType === 'mouse') track(e); else release(); });
-    wrap.addEventListener('pointercancel', release);
-    wrap.addEventListener('pointerleave', release);
+    // 用窗口级指针事件计算接近程度：卡片抬升 / 缩放不会再反过来影响触发
+    window.addEventListener('pointermove', track, { passive: true });
+    window.addEventListener('pointerdown', track, { passive: true });
+    window.addEventListener('pointerup', (e) => { if (e.pointerType === 'mouse') track(e); else release(); });
+    window.addEventListener('pointercancel', release);
+    window.addEventListener('blur', release);
+    document.addEventListener('mouseleave', release);
   }
 
-  /* ------------------- 平台入口：按下 96% → 松手弹簧回弹 → 播完再跳转 */
+  /* ------------------- 平台入口：选中变大 → 按下弹簧 → 松手回弹 → 播完再跳转 */
+  /*
+   * 弹簧阻尼比固定 ζ = 1（临界阻尼）：自身不会出现第二次振荡，
+   * 松开时的那一下“回弹”由手动注入的初速度产生；曲线用解析解按时间求值，帧率不影响手感。
+   * 三种状态：选中（放大 2%）/ 按下（弹簧压到 96%）/ 松开（回弹后落回原位或选中态）。
+   */
 
   function bindPressLinks() {
     const links = $$('.btn-entry, .btn-primary');
     if (!links.length) return;
 
-    const STIFFNESS = .16;
-    const DAMPING = .72;
-    const KICK = .045;    // 松手初速度：回弹越过 100% 约 4~5% 再收回
-    const EPS = .0006;
-    let pending = null;   // 正在播放弹簧的按钮，兼作防重复触发
+    const SELECTED = 1.02;   // 选中态：变大 2%
+    const PRESSED = .96;     // 按下态：缩到 96%
+    const ZETA = 1;          // 阻尼比固定为 1（临界阻尼，自身不振荡；下面的解析解按 ζ=1 推导）
+    const OMEGA = { select: 22, press: 30, release: 20 };   // 固有频率 rad/s
+    const KICK = { press: -1.2, release: 3.4 };             // 手动初速度 scale/s
+    const EPS = .0005;
+    let pending = null;   // 正在播放回弹的按钮，兼作防重复触发
 
-    const setScale = (el, v) => el.style.setProperty('--press', v.toFixed(4));
-    const clearScale = (el) => {
-      el.style.removeProperty('--press');
-      el.classList.remove('is-pressing');
+    // 每个按钮的弹簧状态：当前位置 x、速度 v、指针 / 焦点标志
+    const states = new WeakMap();
+    const stateOf = (el) => {
+      let s = states.get(el);
+      if (!s) {
+        s = { x: 1, v: 0, raf: 0, hover: false, focus: false, down: false, onDone: null };
+        states.set(el, s);
+      }
+      return s;
     };
+    const isSelected = (s) => s.hover || s.focus;
+    const setScale = (el, v) => el.style.setProperty('--press', v.toFixed(4));
+    const markSelected = (el, s) => el.classList.toggle('is-selected', isSelected(s));
 
     function navigate(el) {
       const url = el.href;
@@ -609,35 +843,114 @@
       window.location.assign(url);  // 兜底：退化为当前标签跳转
     }
 
-    function spring(el, go) {
-      let x = .96, v = KICK, frames = 0;
-      const tick = () => {
-        v = (v + (1 - x) * STIFFNESS) * DAMPING;
-        x += v;
-        frames++;
-        setScale(el, x);
-        if ((Math.abs(1 - x) < EPS && Math.abs(v) < EPS) || frames > 120) {
-          clearScale(el);
-          pending = null;
-          if (go) navigate(el);   // 关键：动画完整播完才跳转
+    /* ζ = 1 的解析解：x(t) = target + (A + B t) e^(-ζωt)，A = x0 - target，B = v0 + ζωA */
+    function springTo(el, target, v0, omega, onDone) {
+      const s = stateOf(el);
+      if (s.raf) cancelAnimationFrame(s.raf);
+      s.onDone = onDone || null;
+      const x0 = s.x;
+      const t0 = performance.now();
+      el.classList.add('is-springing');
+      setScale(el, x0);   // 先落一帧当前值，CSS 的选中 fallback 不会抢先跳变
+      const step = (now) => {
+        const t = Math.max(0, (now - t0) / 1000);
+        const damping = ZETA * omega;   // 临界阻尼：衰落系数就等于固有频率
+        const A = x0 - target;
+        const B = v0 + damping * A;
+        const decay = Math.exp(-damping * t);
+        s.x = target + (A + B * t) * decay;
+        s.v = (B - damping * (A + B * t)) * decay;
+        setScale(el, s.x);
+        if (Math.abs(s.x - target) < EPS && Math.abs(s.v) < EPS * 10) {
+          s.x = target;
+          s.v = 0;
+          s.raf = 0;
+          el.classList.remove('is-springing');
+          if (target === PRESSED) setScale(el, target);
+          else el.style.removeProperty('--press');   // 交还 CSS：1 或选中 1.02
+          const done = s.onDone;
+          s.onDone = null;
+          if (done) done();
+          // 回弹途中指针又移进来：落位后补一段选中放大，避免跳变
+          if (target !== PRESSED && !s.down && isSelected(s) && target !== SELECTED) {
+            springTo(el, SELECTED, 0, OMEGA.select);
+          }
           return;
         }
-        requestAnimationFrame(tick);
+        s.raf = requestAnimationFrame(step);
       };
-      requestAnimationFrame(tick);
+      s.raf = requestAnimationFrame(step);
     }
 
     links.forEach((el) => {
+      const s = stateOf(el);
       let pressed = false, pointerHandled = false, startRect = null;
+
+      const beginPress = () => {
+        s.down = true;
+        el.classList.add('is-pressing');
+        if (reduced) { setScale(el, PRESSED); return; }   // 减少动效：直接落到按下态
+        springTo(el, PRESSED, KICK.press, OMEGA.press);
+      };
+
+      const endPress = (go) => {
+        s.down = false;
+        el.classList.remove('is-pressing');
+        if (reduced) {
+          el.style.removeProperty('--press');
+          el.classList.remove('is-selected');
+          if (go) navigate(el);
+          return;
+        }
+        // 松手：回弹到选中态（1.02）或原位（1），播完再跳转
+        springTo(el, isSelected(s) ? SELECTED : 1, KICK.release, OMEGA.release, () => {
+          pending = null;
+          if (go) navigate(el);
+        });
+      };
+
+      el.addEventListener('pointerenter', () => {
+        s.hover = true;
+        if (reduced) return;
+        markSelected(el, s);
+        if (s.down || pending === el) return;
+        springTo(el, SELECTED, 0, OMEGA.select);
+      });
+
+      el.addEventListener('pointerleave', () => {
+        s.hover = false;
+        if (reduced) return;
+        markSelected(el, s);
+        if (s.down || pending === el) return;
+        springTo(el, s.focus ? SELECTED : 1, 0, OMEGA.select);
+      });
+
+      // 键盘焦点（:focus-visible）同样算选中，鼠标点出来的焦点不放大
+      el.addEventListener('focus', () => {
+        if (reduced || !el.matches(':focus-visible')) return;
+        s.focus = true;
+        markSelected(el, s);
+        if (s.down || pending === el) return;
+        springTo(el, SELECTED, 0, OMEGA.select);
+      });
+
+      el.addEventListener('blur', () => {
+        s.focus = false;
+        if (reduced) return;
+        markSelected(el, s);
+        if (s.down || pending === el) return;
+        springTo(el, s.hover ? SELECTED : 1, 0, OMEGA.select);
+      });
 
       el.addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         if (pending) return;
+        s.hover = true;
+        if (!reduced) markSelected(el, s);
         pressed = true;
         startRect = el.getBoundingClientRect();  // 记录未缩放时的边界，供拖出判定
         try { el.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
-        el.classList.add('is-pressing');
-        setScale(el, .96);
+        beginPress();
       });
 
       el.addEventListener('pointerup', (e) => {
@@ -648,9 +961,10 @@
         const r = startRect || el.getBoundingClientRect();
         const inside = e.clientX >= r.left && e.clientX <= r.right &&
                        e.clientY >= r.top && e.clientY <= r.bottom;
-        if (reduced) { clearScale(el); if (inside) navigate(el); return; }
+        s.hover = inside;   // 指针捕获期间边界事件不可靠，以释放位置为准
+        if (!reduced) markSelected(el, s);
         pending = el;
-        spring(el, inside);
+        endPress(inside);
       });
 
       el.addEventListener('pointercancel', () => {
@@ -658,7 +972,7 @@
         pressed = false;
         if (pending) return;
         pending = el;
-        spring(el, false);
+        endPress(false);
       });
 
       el.addEventListener('click', (e) => {
@@ -666,50 +980,22 @@
         if (pointerHandled) { pointerHandled = false; return; }
         if (pending === el) return;
         if (reduced) { navigate(el); return; }
-        // 键盘 Enter/Space 不会触发 pointerdown，补一次按下态再弹回
+        // 键盘 Enter/Space 不会触发 pointerdown：先弹簧按下，再松手回弹
         pending = el;
-        el.classList.add('is-pressing');
-        setScale(el, .96);
-        spring(el, true);
+        beginPress();
+        setTimeout(() => { if (pending === el) endPress(true); }, 90);
       });
     });
   }
 
   /* ------------------------------------------------------------- 交互绑定 */
 
-  let themeTimer = null;
-
   function applyCfg() {
-    const theme = CFG.theme === 'paper' ? 'paper' : 'ink';
-    CFG.theme = theme;
-    doc.dataset.theme = theme;
-    body.dataset.theme = theme; // 兼容仍按 body 取值的旧样式
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === 'ink' ? '#0e1512' : '#f2efe7';
     $$('.seg').forEach((seg) => {
       seg.querySelectorAll('button').forEach((b) => {
         b.classList.toggle('is-on', String(CFG[seg.dataset.key]) === b.dataset.value);
       });
     });
-    // 头部按钮与 Tweaks 面板共用同一份状态，任意一处切换都要同步另一处
-    const toggle = $('#theme-toggle');
-    if (toggle) {
-      const next = theme === 'ink' ? '浅色' : '深色';
-      const label = `切换到${next}主题`;
-      toggle.setAttribute('aria-label', label);
-      toggle.title = label;
-      const text = toggle.querySelector('.theme-label');
-      if (text) text.textContent = next;
-    }
-  }
-
-  function setTheme(theme) {
-    CFG.theme = theme === 'paper' ? 'paper' : 'ink';
-    saveCfg();
-    doc.classList.add('theme-changing');
-    clearTimeout(themeTimer);
-    themeTimer = setTimeout(() => doc.classList.remove('theme-changing'), 400);
-    applyCfg();
   }
 
   function setTweaks(open) {
@@ -720,13 +1006,11 @@
   function bind() {
     $('#tweaks-trigger').addEventListener('click', () => setTweaks($('#tweaks').hidden));
     $('#tweaks-close').addEventListener('click', () => setTweaks(false));
-    $('#theme-toggle').addEventListener('click', () => setTheme(CFG.theme === 'ink' ? 'paper' : 'ink'));
 
     $$('.seg').forEach((seg) => seg.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
       const k = seg.dataset.key;
-      if (k === 'theme') { setTheme(b.dataset.value); return; }
       CFG[k] = Number(b.dataset.value);
       saveCfg(); applyCfg();
       if (k === 'agents' && !reduced) runBuild();
@@ -740,15 +1024,19 @@
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.toLowerCase();
       if (k === 't') setTweaks($('#tweaks').hidden);
+      if (k === 'r' && resting) runBuild();     // 静息态按 R 重播整段建造
     });
 
-    window.addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; }, { passive: true });
+    window.addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; wakeAll(); }, { passive: true });
     document.addEventListener('mouseleave', () => { mouse.active = false; });
 
     let rt = null;
     window.addEventListener('resize', () => {
       clearTimeout(rt);
-      rt = setTimeout(() => { if (doc.dataset.stage === 'building' && !reduced) showAll(); }, 220);
+      rt = setTimeout(() => {
+        if (resting) { parkSentinel(); dockAfterRest(); return; }   // 栏位与 CTA 都变了位置，重新落位
+        if (doc.dataset.stage === 'building' && !reduced) showAll();
+      }, 220);
     });
 
     bindPanelTilt();
@@ -756,11 +1044,13 @@
   }
 
   function boot() {
+    // app.js 已经接管舞台：撤掉 index.html 的 10s 白屏兜底，否则重播会在第 10 秒被它掐断
+    if (window.__fcFallback) { clearTimeout(window.__fcFallback); window.__fcFallback = 0; }
     const dots = $('#hud-dots');
     for (let i = 0; i < 4; i++) { const d = document.createElement('i'); d.style.background = COLORS[i]; dots.appendChild(d); }
     applyCfg(); bind();
     if (reduced) { showAll(); return; }
-    if (!running) { running = true; requestAnimationFrame(loop); }
+    startLoop();
     runBuild();
   }
 

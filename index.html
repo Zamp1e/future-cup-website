@@ -1,23 +1,12 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="ink">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="dark light">
-  <script>
-    /* 首屏前还原上次选的明暗，避免刷新时先闪一下默认墨色 */
-    (function () {
-      var t = 'ink';
-      try {
-        var saved = JSON.parse(localStorage.getItem('fc-stage') || '{}').theme;
-        if (saved === 'ink' || saved === 'paper') t = saved;
-      } catch (e) { /* file:// 或隐私模式下忽略 */ }
-      document.documentElement.dataset.theme = t;
-    })();
-  </script>
+  <meta name="color-scheme" content="light">
   <title>Future Cup · 智能体调度平台</title>
   <meta name="description" content="Future Cup 是一个智能体调度平台：受控 Agent 团队、任务 DAG、真实浏览器验证与最多三轮有界自愈，交付带验证证据的可运行工程。">
-  <meta name="theme-color" content="#0e1512">
+  <meta name="theme-color" content="#eef2f7">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Future Cup · 智能体调度平台">
   <meta property="og:description" content="一群受控 Agent，从一句话需求出发，交付带验证证据的可运行工程。">
@@ -32,7 +21,6 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/spline-sans-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>
     /* 渐进增强：只有动效可用时才先隐藏内容；10 秒兜底，脚本异常也不会留下空白页 */
@@ -40,7 +28,8 @@
       var d = document.documentElement;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       d.dataset.stage = 'building';
-      setTimeout(function () {
+      window.__fcFallback = setTimeout(function () {
+        window.__fcFallback = 0;
         if (d.dataset.stage !== 'building') return;
         d.dataset.stage = 'live';
         document.body.classList.remove('is-locked');
@@ -88,28 +77,18 @@
 
   <div class="frame">
     <header class="site-header">
-      <a class="brand" href="https://www.tangruirui.space/" target="_blank" rel="noopener" aria-label="打开 Future Cup 在线平台">
+      <a class="brand" href="https://futurecup.tangruirui.space/" target="_blank" rel="noopener" aria-label="打开 Future Cup 在线平台">
         <img class="brand-mark" src="assets/brand-mark.svg" width="44" height="31" alt="">
         <span class="brand-copy"><strong>FUTURE CUP</strong><span>智能体调度平台</span></span>
       </a>
       <div class="header-right">
-        <span class="header-meta" data-build="meta">MVP · REACT / TS / VITE / ANTD</span>
+        <span class="header-meta" data-build="meta">MVP · REACT · TYPESCRIPT · VITE · ANTD</span>
         <div class="header-actions">
-          <button class="btn-theme" id="theme-toggle" type="button" aria-label="切换到浅色主题" title="切换到浅色主题">
-            <svg class="theme-icon theme-icon-sun" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-              <circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6L16 16M16 4l-1.4 1.4M5.4 14.6L4 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <svg class="theme-icon theme-icon-moon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-              <path d="M16.5 12.9A7 7 0 0 1 7.1 3.5 7 7 0 1 0 16.5 12.9Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-            <span class="theme-label">浅色</span>
-          </button>
           <a class="btn-github" data-build="github" href="https://github.com/tangrui13131/ruiruiai" target="_blank" rel="noopener" aria-label="在 GitHub 打开 ruiruiai 仓库" title="GitHub · ruiruiai">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
             <span class="github-label">GitHub</span>
           </a>
-          <a class="btn-entry" data-build="entry" href="https://www.tangruirui.space/" target="_blank" rel="noopener">进入平台 <span aria-hidden="true">↗</span></a>
+          <a class="btn-entry" data-build="entry" href="https://futurecup.tangruirui.space/" target="_blank" rel="noopener">进入平台 <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </header>
@@ -119,9 +98,9 @@
         <p class="hero-kicker" data-build="kicker"><span class="kicker-mark" aria-hidden="true"></span>AGENT ORCHESTRATION · A LIVE BUILD</p>
 
         <h1 class="hero-title" id="hero-title">
-          <span class="title-line" data-build="l1" data-chars="3">从需求</span>
-          <span class="title-line" data-build="l2" data-chars="5">到<em>可验证的</em></span>
-          <span class="title-line" data-build="l3" data-chars="4">工程交付</span>
+          <span class="title-line is-latin" data-build="l1" data-chars="10">SpecCoding</span>
+          <span class="title-line" data-build="l2" data-chars="3">前置，</span>
+          <span class="title-line" data-build="l3" data-chars="4"><em>我们闭环</em></span>
         </h1>
 
         <div class="hero-rule" id="hero-rule" aria-hidden="true"></div>
@@ -129,7 +108,7 @@
         <p class="hero-lede" data-build="lede">受控 Agent 团队 · 任务 DAG · 真实浏览器验证 · 有界自愈。交付带证据的可运行工程。</p>
 
         <div class="hero-actions">
-          <a class="btn-primary" data-build="cta" href="https://www.tangruirui.space/" target="_blank" rel="noopener">进入平台 · 在线体验 <span aria-hidden="true">↗</span></a>
+          <a class="btn-primary" data-build="cta" href="https://futurecup.tangruirui.space/" target="_blank" rel="noopener">进入平台 · 在线体验 <span aria-hidden="true">↗</span></a>
           <!-- 与上方 CTA 完全同款：同一套圆角/内边距/按压缩放，弹簧播完后触发下载 -->
           <a class="btn-primary btn-download" data-build="download" data-download="FutureCup-Setup-x64.exe"
              href="https://github.com/tangrui13131/ruiruiai/releases/download/v1.4.5/FutureCup-Setup-x64.exe"
@@ -175,7 +154,7 @@
 
           <footer class="bp-foot">
             <span class="bp-track"><i class="bp-bar" id="bp-bar"></i></span>
-            <span class="bp-stat">3 / 3 VERIFIED</span>
+            <span class="bp-stat">VERIFIED <span class="bp-digit">3</span>/3</span>
           </footer>
         </aside>
         </div>
@@ -190,7 +169,7 @@
     </section>
 
     <footer class="site-footer">
-      <p class="footer-links"><a href="https://www.tangruirui.space/" target="_blank" rel="noopener">www.tangruirui.space ↗</a><span class="footer-sep">/</span><a class="footer-link-gh" href="https://github.com/tangrui13131/ruiruiai" target="_blank" rel="noopener" aria-label="在 GitHub 打开 ruiruiai 仓库"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>GitHub ↗</a></p>
+      <p class="footer-links"><a href="https://futurecup.tangruirui.space/" target="_blank" rel="noopener">futurecup.tangruirui.space ↗</a><span class="footer-sep">/</span><a class="footer-link-gh" href="https://github.com/tangrui13131/ruiruiai" target="_blank" rel="noopener" aria-label="在 GitHub 打开 ruiruiai 仓库"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>GitHub ↗</a></p>
     </footer>
   </div>
 
@@ -201,6 +180,7 @@
     <span class="hud-sep" aria-hidden="true"></span>
     <span class="hud-state" id="hud-state">BUILDING</span>
     <span class="hud-bar" aria-hidden="true"><i id="hud-bar"></i></span>
+    <span class="hud-stage" id="hud-stage" aria-hidden="true"></span>
   </div>
 
   <!-- Tweaks：关闭时完全隐藏 -->
@@ -209,7 +189,6 @@
   </button>
   <aside class="tweaks" id="tweaks" hidden>
     <div class="tweaks-head"><strong>Tweaks</strong><button id="tweaks-close" type="button" aria-label="关闭 Tweaks 面板">×</button></div>
-    <div class="tweak-row"><span>画布</span><div class="seg" data-key="theme"><button type="button" data-value="ink" class="is-on">墨</button><button type="button" data-value="paper">纸</button></div></div>
     <div class="tweak-row"><span>速度</span><div class="seg" data-key="speed"><button type="button" data-value="1">1×</button><button type="button" data-value="1.5" class="is-on">1.5×</button><button type="button" data-value="2">2×</button></div></div>
     <div class="tweak-row"><span>光标</span><div class="seg" data-key="agents"><button type="button" data-value="8">少</button><button type="button" data-value="14" class="is-on">标准</button><button type="button" data-value="24">多</button></div></div>
     <p class="tweaks-note">T 面板 · Esc 关闭</p>

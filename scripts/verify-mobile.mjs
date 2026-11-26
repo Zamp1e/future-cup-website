@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -12,9 +12,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
 const errors = []
 const vertical = [
@@ -42,7 +40,7 @@ for (const v of vertical) {
 
   const r = await page.evaluate(() => {
     const q = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height } }
-    const taps = ['#theme-toggle', '.btn-github', '#tweaks-trigger', '.btn-download'].map((s) => q(s))
+    const taps = ['.btn-github', '#tweaks-trigger', '.btn-download'].map((s) => q(s))
     const cta = q('[data-build="cta"]'), dl = q('.btn-download'), cap = q('.cap-strip'), footer = q('.site-footer')
     // 用实际内联元素判断遮挡；<p> 容器会占满整行，直接拿它的矩形会误报
     const tw = document.querySelector('.tweaks-trigger').getBoundingClientRect()
@@ -60,6 +58,8 @@ for (const v of vertical) {
         .some((e) => e.scrollWidth > e.clientWidth + 2),
       frameMax: getComputedStyle(document.querySelector('.frame')).maxWidth,
       titleFont: parseFloat(getComputedStyle(document.querySelector('.hero-title')).fontSize),
+      hasTheme: document.documentElement.hasAttribute('data-theme'),
+      bg: getComputedStyle(document.body).backgroundColor,
     }
   })
 
@@ -68,6 +68,7 @@ for (const v of vertical) {
   check(`${v.label}：无溢出 / 一屏 / 44px 点击区 / 无重叠`, ok,
     `溢出=${r.overflow} 页高=${r.pageH} 点击=${Math.round(r.minTap)}px CTA空隙=${Math.round(r.gap)}px ` +
     `页脚重叠=${r.footerOverlap} 链接压悬浮=${r.linksVsTweaks} 文字溢出=${r.textOverflow}`)
+  check(`${v.label}：单主题浅蓝画布`, !r.hasTheme && r.bg === 'rgb(247, 247, 244)', r.bg)
 
   // 平板段：收窄居中 + 标题放大
   if (v.w >= 641 && v.w <= 1000) {
@@ -81,20 +82,9 @@ for (const v of vertical) {
   check(`${v.label}：Tweaks 面板不越界`, tw.x >= 0 && tw.x + tw.width <= v.w + 1 && tw.y >= 0,
     `x=${Math.round(tw.x)} w=${Math.round(tw.width)}`)
 
-  // 主题按钮在触摸尺寸下仍可点
-  const before = await page.evaluate(() => document.documentElement.dataset.theme)
-  await page.locator('#theme-toggle').click()
-  const after = await page.evaluate(() => document.documentElement.dataset.theme)
-  check(`${v.label}：触摸切换主题有效`, before !== after, `${before} → ${after}`)
-  await page.locator('#theme-toggle').click()
-
+  // 主题按钮已移除，触摸交互改由按压弹簧覆盖（见文件末尾的 tap 用例）
   if ([320, 390, 768, 1000].includes(v.w)) {
     await page.screenshot({ path: resolve(out, `${v.label}.png`), fullPage: true })
-    if (v.w === 390) {
-      await page.locator('#theme-toggle').click()
-      await page.waitForTimeout(350)
-      await page.screenshot({ path: resolve(out, '390px-paper.png'), fullPage: true })
-    }
   }
   await ctx.close()
 }
@@ -140,7 +130,10 @@ await tp.addInitScript(() => {
     window.__mLog.sampling = true
     const tick = () => {
       const e = document.querySelector('[data-build="cta"]')
-      if (e) window.__mLog.samples.push({ t: performance.now(), v: parseFloat(e.style.getPropertyValue('--press')) || 1 })
+      if (e) {
+        const raw = e.style.getPropertyValue('--press')
+        window.__mLog.samples.push({ t: performance.now(), v: raw ? parseFloat(raw) : parseFloat(getComputedStyle(e).scale) })
+      }
       if (window.__mLog.sampling && window.__mLog.samples.length < 600) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
@@ -155,8 +148,10 @@ await tp.evaluate(() => window.__startPressSampler())
 await tp.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2)
 await tp.waitForFunction(() => !document.querySelector('[data-build="cta"]').style.getPropertyValue('--press'), { timeout: 4000 })
 const log = await tp.evaluate(() => { window.__mLog.sampling = false; return window.__mLog })
-const peak = log.samples.reduce((a, b) => (b.v > a.v ? b : a), { t: 0, v: 1 })
-check('触摸 tap：按下 96% 且回弹过冲', log.samples.some((s) => Math.abs(s.v - .96) < .001) && peak.v > 1.02,
+const peak = log.samples.reduce((a, b) => (b.v > a.v ? b : a), { t: 0, v: 0 })
+const afterPeak = log.samples.slice(log.samples.indexOf(peak) + 1)
+const noSecondPeak = afterPeak.length > 3 && afterPeak.every((s, i) => i === 0 || s.v <= afterPeak[i - 1].v + .0008)
+check('触摸 tap：回弹过冲且只有一次峰', peak.v > 1.02 && peak.v < 1.08 && noSecondPeak,
   `峰值 ${peak.v.toFixed(4)}`)
 check('触摸 tap：动画播完才跳转', log.open.length === 1 && log.open[0].press === '' && log.open[0].t > peak.t,
   `峰值 @${peak.t.toFixed(0)}ms → open @${log.open.length ? log.open[0].t.toFixed(0) : '无'}ms`)

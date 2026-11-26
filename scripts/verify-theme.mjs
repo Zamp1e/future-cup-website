@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -12,107 +12,177 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
+const errors = []
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const page = await ctx.newPage()
-const errors = []
 page.on('pageerror', (e) => errors.push(String(e)))
+page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
 
-const attr = () => page.evaluate(() => document.documentElement.dataset.theme)
 const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor)
-const aria = () => page.locator('#theme-toggle').getAttribute('aria-label')
 const meta = () => page.locator('meta[name="theme-color"]').getAttribute('content')
 
 await page.goto(base, { waitUntil: 'networkidle' })
-await page.waitForTimeout(1500)
-
-check('默认墨色主题', (await attr()) === 'ink' && (await bg()) === 'rgb(14, 21, 18)', `${await attr()} / ${await bg()}`)
-check('头部切换按钮可见', await page.locator('#theme-toggle').isVisible())
-check('默认显示太阳图标且 aria-label 指向浅色', await page.locator('.theme-icon-sun').isVisible() && !(await page.locator('.theme-icon-moon').isVisible()) && (await aria()).includes('浅色'))
-
-// 纯图标样式：两个辅助按钮无边框、无填充、无文字，hover 也不出现实心方块
-const transparent = (v) => v === 'transparent' || v === 'rgba(0, 0, 0, 0)'
-const plain = await page.evaluate(() => ['#theme-toggle', '.btn-github'].map((s) => {
-  const c = getComputedStyle(document.querySelector(s))
-  return { s, border: c.borderTopWidth, bg: c.backgroundColor }
-}))
-check('两个辅助按钮无边框无填充', plain.every((x) => x.border === '0px' && transparent(x.bg)), JSON.stringify(plain))
-check('文字标签已隐藏、仅图标可见',
-  !(await page.locator('.theme-label').isVisible()) && !(await page.locator('.github-label').isVisible()) &&
-  await page.locator('.btn-github svg').isVisible() && await page.locator('.theme-icon-sun').isVisible())
-check('纯图标按钮仍有可访问名称',
-  (await aria()).length > 0 && (await page.locator('.btn-github').getAttribute('aria-label')).length > 0)
-await page.locator('#theme-toggle').hover()
-const hoverBg = await page.locator('#theme-toggle').evaluate((e) => getComputedStyle(e).backgroundColor)
-check('hover 不出现填充方块', transparent(hoverBg), hoverBg)
-await page.mouse.move(700, 600)
-await page.screenshot({ path: resolve(out, 'desktop-ink.png') })
-
-await page.locator('#theme-toggle').click()
-await page.waitForTimeout(500)
-check('点击后切到纸色', (await attr()) === 'paper' && (await bg()) === 'rgb(242, 239, 231)', `${await attr()} / ${await bg()}`)
-check('图标/aria-label 翻转为深色', (await aria()).includes('深色') && await page.locator('.theme-icon-moon').isVisible() && !(await page.locator('.theme-icon-sun').isVisible()))
-check('theme-color 同步', (await meta()) === '#f2efe7', await meta())
-check('切换过渡类会自动移除', !(await page.evaluate(() => document.documentElement.classList.contains('theme-changing'))))
-await page.screenshot({ path: resolve(out, 'desktop-paper.png') })
-
-// Tweaks 面板双向同步
-await page.locator('#tweaks-trigger').click()
-check('Tweaks「纸」按钮同步高亮', await page.locator('.seg[data-key="theme"] button[data-value="paper"]').evaluate((b) => b.classList.contains('is-on')))
-await page.locator('.seg[data-key="theme"] button[data-value="ink"]').click()
-await page.waitForTimeout(150)
-check('从 Tweaks 切回墨色，头部按钮同步', (await attr()) === 'ink' && (await aria()).includes('浅色'))
-await page.locator('#theme-toggle').click()
-check('再次由头部切到纸色', (await attr()) === 'paper')
-
-// 持久化 + 首屏无闪烁（延迟加载 app.js，验证 head 内联脚本独立生效）
-check('localStorage 已持久化', (await page.evaluate(() => JSON.parse(localStorage.getItem('fc-stage')).theme)) === 'paper')
-await page.route('**/app.js', async (route) => { await new Promise((r) => setTimeout(r, 900)); await route.continue() })
-await page.reload({ waitUntil: 'domcontentloaded' })
-check('刷新后 app.js 尚未加载时已是纸色（无闪回）', (await bg()) === 'rgb(242, 239, 231)', await bg())
-await page.unroute('**/app.js')
-await page.waitForTimeout(1400)
-check('脚本加载完成后主题仍为纸色', (await attr()) === 'paper')
-
-// 键盘可达
-await page.locator('#theme-toggle').focus()
-await page.keyboard.press('Enter')
-await page.waitForTimeout(120)
-check('键盘 Enter 可切换', (await attr()) === 'ink')
-await page.locator('#theme-toggle').click()
-check('切回纸色准备移动端检查', (await attr()) === 'paper')
-
-// 移动端
-await page.setViewportSize({ width: 390, height: 844 })
-await page.reload({ waitUntil: 'networkidle' })
-await page.waitForTimeout(900)
-check('移动端切换按钮可见且保持纯图标', await page.locator('#theme-toggle').isVisible() &&
-  !(await page.locator('.theme-label').isVisible()) &&
-  (await page.locator('.theme-icon-sun').isVisible() || await page.locator('.theme-icon-moon').isVisible()))
-check('移动端纸色无横向溢出', await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), await page.evaluate(() => `${document.documentElement.scrollWidth}/${window.innerWidth}`))
-await page.screenshot({ path: resolve(out, 'mobile-paper.png') })
-await page.locator('#theme-toggle').click()
+await page.waitForFunction(() => document.documentElement.dataset.stage === 'live', { timeout: 20000 })
 await page.waitForTimeout(400)
-check('移动端切到墨色且无横向溢出', (await attr()) === 'ink' && await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
 
-// 减少动效
-const rm = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
-const rp = await rm.newPage()
+const tokens = await page.evaluate(() => {
+  const s = getComputedStyle(document.documentElement)
+  const get = (name) => s.getPropertyValue(name).trim()
+  return {
+    accent: get('--accent'),
+    ink: get('--fg'),
+    line: get('--rule'),
+    font: getComputedStyle(document.body).fontFamily,
+    raised: get('--shadow-raised'),
+    raisedSm: get('--shadow-raised-sm'),
+    raisedLg: get('--shadow-raised-lg'),
+    inset: get('--shadow-inset'),
+    grid: get('--grid-line'),
+    colorScheme: s.colorScheme,
+    hasThemeAttr: document.documentElement.hasAttribute('data-theme'),
+  }
+})
+
+/* 顶层逗号切分：rgba() 内部的逗号不能被当成层分隔符 */
+const splitShadows = (raw) => {
+  const out = []
+  let depth = 0
+  let cur = ''
+  for (const ch of raw) {
+    if (ch === '(') depth += 1
+    else if (ch === ')') depth -= 1
+    if (ch === ',' && depth === 0) {
+      out.push(cur.trim())
+      cur = ''
+    } else cur += ch
+  }
+  if (cur.trim()) out.push(cur.trim())
+  return out
+}
+
+/* 解析 box-shadow token：只接受 "x y blur [spread] color" 形式的层 */
+const shadowLayers = (raw) =>
+  splitShadows(raw).map((layer) => {
+    /* 0 可以不带单位（浏览器会把 0px 序列化回 0），其余分量必带 px */
+    const m = layer.match(/^(-?[\d.]+)(?:px)?\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+(-?[\d.]+)px)?\s+rgba?\(([^)]+)\)$/)
+    if (!m) return null
+    return {
+      x: Number(m[1]),
+      y: Number(m[2]),
+      blur: Number(m[3]),
+      spread: m[4] === undefined ? 0 : Number(m[4]),
+      alpha: Number(m[5].split(',').pop()),
+    }
+  })
+
+/* 卡片投影规则：只向下、双层、近层小而实 / 远层大而柔、模糊 > 偏移、扩散 ≤ 0、不透明度 ≤ 20% */
+const cardShadowOk = [tokens.raisedSm, tokens.raised, tokens.raisedLg]
+  .map(shadowLayers)
+  .every((layers) => {
+    if (layers.length !== 2 || layers.includes(null)) return false
+    const [near, far] = layers
+    return layers.every((l) => l.x === 0 && l.y > 0 && l.blur > l.y && l.spread <= 0 && l.alpha <= 0.2)
+      && near.blur < far.blur && near.alpha > far.alpha
+  })
+
+check('单主题：html 不再挂 data-theme', tokens.hasThemeAttr === false)
+check('浅蓝工作台底色', (await bg()) === 'rgb(247, 247, 244)', await bg())
+check('color-scheme 固定为 light', tokens.colorScheme === 'light', tokens.colorScheme)
+check('theme-color 同步浅蓝', (await meta()) === '#eef2f7', await meta())
+check('主色 / 墨色 / 分隔线取自平台色板',
+  tokens.accent === '#3b6a9c' && tokens.ink === '#1c1d1f' && tokens.line === '#e3eaf3',
+  `${tokens.accent} / ${tokens.ink} / ${tokens.line}`)
+check('字体栈以 Archivo 开头', tokens.font.startsWith('Archivo'), tokens.font)
+check('卡片阴影：只向下 · 双层近实远柔 · 模糊大于偏移 · 扩散不撑开 · 不透明度 ≤ 20%',
+  cardShadowOk && tokens.raised.includes('rgba(45, 75, 115') && tokens.inset.includes('inset'),
+  `${tokens.raised} | ${tokens.inset}`)
+check('背景网格使用钢蓝低透明度', tokens.grid.includes('59, 106, 156'), tokens.grid)
+
+const header = await page.evaluate(() => {
+  const actions = [...document.querySelectorAll('.header-actions > *')]
+  return {
+    classes: actions.map((n) => n.className.split(' ')[0]),
+    visible: actions.map((n) => getComputedStyle(n).display !== 'none'),
+    themeToggle: document.querySelectorAll('#theme-toggle, .theme-icon, .seg[data-key="theme"]').length,
+  }
+})
+check('头部只保留 GitHub 与进入平台两个入口',
+  header.classes.join('|') === 'btn-github|btn-entry' && header.visible.every(Boolean),
+  header.classes.join(' | '))
+check('明暗切换按钮与主题分段控件已移除', header.themeToggle === 0)
+
+const tweaks = await page.evaluate(() => {
+  const rows = [...document.querySelectorAll('.tweak-row > span')].map((n) => n.textContent.trim())
+  return { rows, themeRow: document.querySelectorAll('.seg[data-key="theme"]').length }
+})
+check('Tweaks 只保留速度与光标两项',
+  tweaks.rows.join('|') === '速度|光标' && tweaks.themeRow === 0,
+  tweaks.rows.join(' | '))
+
+await page.locator('#tweaks-trigger').click()
+check('Tweaks 面板可打开', await page.locator('.tweaks').isVisible())
+await page.screenshot({ path: resolve(out, 'tweaks-light.png') })
+await page.keyboard.press('Escape')
+check('Esc 关闭 Tweaks', await page.locator('.tweaks').isHidden())
+await page.screenshot({ path: resolve(out, 'desktop-light.png') })
+await ctx.close()
+
+// 旧版本留下的 theme 配置不能再影响首屏
+const legacy = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+await legacy.addInitScript(() => {
+  localStorage.setItem('fc-stage', JSON.stringify({ theme: 'ink', speed: 1.5, agents: 14 }))
+})
+const lp = await legacy.newPage()
+lp.on('pageerror', (e) => errors.push(String(e)))
+await lp.goto(base, { waitUntil: 'networkidle' })
+await lp.waitForFunction(() => document.documentElement.dataset.stage === 'live', { timeout: 20000 })
+const legacyState = await lp.evaluate(() => ({
+  hasTheme: document.documentElement.hasAttribute('data-theme'),
+  bg: getComputedStyle(document.body).backgroundColor,
+  stage: document.documentElement.dataset.stage,
+}))
+check('旧 localStorage 主题配置被忽略且页面正常完成',
+  legacyState.hasTheme === false && legacyState.bg === 'rgb(247, 247, 244)' && legacyState.stage === 'live',
+  JSON.stringify(legacyState))
+await legacy.close()
+
+// 移动端：单主题结构完整、可点击区达标
+const mctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+const mp = await mctx.newPage()
+mp.on('pageerror', (e) => errors.push(String(e)))
+await mp.goto(base, { waitUntil: 'networkidle' })
+await mp.waitForFunction(() => document.documentElement.dataset.stage === 'live', { timeout: 20000 })
+const mobile = await mp.evaluate(() => {
+  const entry = document.querySelector('.btn-entry')
+  const github = document.querySelector('.btn-github').getBoundingClientRect()
+  return {
+    overflow: document.documentElement.scrollWidth - innerWidth,
+    entryHidden: getComputedStyle(entry).display === 'none',
+    github: Math.min(github.width, github.height),
+  }
+})
+check('移动端无横向溢出', mobile.overflow <= 0, `${mobile.overflow}px`)
+check('移动端隐藏头部「进入平台」', mobile.entryHidden)
+check('移动端图标按钮 ≥ 44px', mobile.github >= 44, `${Math.round(mobile.github)}px`)
+await mp.screenshot({ path: resolve(out, 'mobile-light.png') })
+await mctx.close()
+
+// reduced motion：跳过编舞但内容完整
+const rctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+const rp = await rctx.newPage()
 rp.on('pageerror', (e) => errors.push(String(e)))
 await rp.goto(base, { waitUntil: 'networkidle' })
-await rp.waitForTimeout(300)
-await rp.locator('#theme-toggle').click()
-check('reduced motion 下切换仍生效', (await rp.evaluate(() => document.documentElement.dataset.theme)) === 'paper')
+await rp.waitForTimeout(400)
+check('reduced motion 直接呈现完整内容',
+  (await rp.locator('[data-build="cta"]').isVisible()) &&
+  (await rp.evaluate(() => document.documentElement.dataset.stage)) === 'live')
+await rctx.close()
 
 check('无运行时异常', errors.length === 0, errors.join(' | ') || '0 errors')
 
-await rm.close()
-await ctx.close()
 await browser.close()
-
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`)
 if (failed.length) process.exitCode = 1

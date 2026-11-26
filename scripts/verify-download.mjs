@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import { launchBrowser } from './launch-browser.mjs'
 
 const base = 'http://127.0.0.1:4173/'
 const INSTALLER = 'https://github.com/tangrui13131/ruiruiai/releases/download/v1.4.5/FutureCup-Setup-x64.exe'
@@ -8,9 +8,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-let browser
-try { browser = await chromium.launch({ channel: 'chrome', headless: true }) }
-catch (e) { browser = await chromium.launch({ headless: true }) }
+const browser = await launchBrowser()
 
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })
 // 不真连 GitHub：用带 Content-Disposition 的桩响应触发下载
@@ -48,7 +46,10 @@ await page.addInitScript(() => {
     window.__dlLog.sampling = true
     const tick = () => {
       const e = document.querySelector('.btn-download')
-      if (e) window.__dlLog.samples.push({ t: performance.now(), v: parseFloat(e.style.getPropertyValue('--press')) || 1 })
+      if (e) {
+        const raw = e.style.getPropertyValue('--press')
+        window.__dlLog.samples.push({ t: performance.now(), v: raw ? parseFloat(raw) : parseFloat(getComputedStyle(e).scale) })
+      }
       if (window.__dlLog.sampling && window.__dlLog.samples.length < 600) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
@@ -76,16 +77,28 @@ const ui = await page.evaluate(() => {
   const cta = document.querySelector('[data-build="cta"]')
   const d = document.querySelector('.btn-download')
   const keys = ['borderTopLeftRadius', 'paddingTop', 'paddingLeft', 'fontSize', 'fontWeight',
-    'backgroundColor', 'color', 'scale', 'transition', 'gap', 'letterSpacing', 'borderRadius']
+    'scale', 'transition', 'gap', 'letterSpacing', 'borderRadius']
   const diff = []
   for (const k of keys) {
     const a = getComputedStyle(cta)[k], b = getComputedStyle(d)[k]
     if (a !== b) diff.push(`${k}: ${a} ≠ ${b}`)
   }
-  return { diff, sameClass: d.classList.contains('btn-primary'), href: d.href, visible: getComputedStyle(d).visibility }
+  const ctaCss = getComputedStyle(cta), dlCss = getComputedStyle(d)
+  return {
+    diff,
+    sameClass: d.classList.contains('btn-primary'),
+    href: d.href,
+    visible: dlCss.visibility,
+    ctaBg: ctaCss.backgroundColor,
+    ctaColor: ctaCss.color,
+    dlBg: dlCss.backgroundColor,
+    dlColor: dlCss.color,
+  }
 })
 check('下载按钮复用 btn-primary 且入场后可见', ui.sameClass && ui.visible === 'visible')
-check('UI 逐项与主 CTA 一致', ui.diff.length === 0, ui.diff.length ? ui.diff.join(' | ') : '12 项样式全同')
+check('10 项几何 / 字号与主 CTA 一致', ui.diff.length === 0, ui.diff.length ? ui.diff.join(' | ') : '10 项样式全同')
+check('主 CTA 为黑色主按钮', ui.ctaBg === 'rgb(30, 31, 34)' && ui.ctaColor === 'rgb(255, 255, 255)', `${ui.ctaBg} / ${ui.ctaColor}`)
+check('下载按钮为白色次按钮', ui.dlBg === 'rgb(251, 251, 249)' && ui.dlColor === 'rgb(28, 29, 31)', `${ui.dlBg} / ${ui.dlColor}`)
 check('下载链接正确', ui.href === INSTALLER, ui.href)
 
 // 2. 按压 → 弹簧 → 播完才下载
@@ -93,8 +106,12 @@ await reset()
 const box = await dl.boundingBox()
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
 await page.mouse.down()
+await page.waitForFunction(() => {
+  const v = parseFloat(document.querySelector('.btn-download').style.getPropertyValue('--press'))
+  return Number.isFinite(v) && Math.abs(v - .96) < .0006
+}, null, { timeout: 2500 })
 const down = parseFloat(await pressDl())
-check('按下缩到 96%', Math.abs(down - .96) < .001 && (await scaleDl()).startsWith('0.96'), `--press=${down}`)
+check('按下弹簧压到 96%', Math.abs(down - .96) < .001 && (await scaleDl()).startsWith('0.96'), `--press=${down}`)
 await page.evaluate(() => window.__startDlSampler())
 await page.mouse.up()
 await page.waitForFunction(() => !document.querySelector('.btn-download').style.getPropertyValue('--press'), { timeout: 4000 })
@@ -107,7 +124,9 @@ check('下载时动画已播完（缩放已清除）', log.clicks.length === 1 &
   log.clicks.length ? `press=[${log.clicks[0].press}]` : '未触发')
 check('触发的是下载而非新标签跳转', log.clicks.length === 1 &&
   log.clicks[0].filename === 'FutureCup-Setup-x64.exe' && log.clicks[0].href === INSTALLER)
-check('最终精确回到 100%', (await scaleDl()) === '1' && !(await pressDl()))
+await page.mouse.move(700, 700)
+await page.waitForFunction(() => getComputedStyle(document.querySelector('.btn-download')).scale === '1', null, { timeout: 2500 })
+check('移开指针后精确回到 100%', (await scaleDl()) === '1' && !(await pressDl()), `scale=${await scaleDl()}`)
 check('浏览器产生下载事件', await waitDownload(), downloadUrl)
 await reset()
 
@@ -119,12 +138,13 @@ const keyLog = await page.evaluate(() => window.__dlLog.clicks)
 check('键盘 Enter：播完动画后下载', keyLog.length === 1 && keyLog[0].press === '' && (await waitDownload()))
 await reset()
 
-// 4. 按住拖出：回弹但不下载
+// 4. 按住拖出：回弹但不下载（先 blur，避免键盘焦点把按钮留在选中态）
+await dl.evaluate((e) => e.blur())
 await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
 await page.mouse.down()
 await page.mouse.move(120, 700, { steps: 6 })
 await page.mouse.up()
-await page.waitForTimeout(650)
+await page.waitForTimeout(900)
 check('按住拖出：回弹且不下载',
   !(await pressDl()) && (await scaleDl()) === '1' &&
   (await page.evaluate(() => window.__dlLog.clicks.length)) === 0 && !downloadSeen)
@@ -150,8 +170,9 @@ check('reduced motion：无缩放、立即下载', rmDownload &&
 check('无运行时异常', errors.length === 0, errors.join(' | ') || '0 errors')
 
 await rm.close()
-await ctx.close()
-await browser.close()
+// 下载结束后浏览器可能先一步回收页面/上下文，清理失败不算用例失败
+try { await ctx.close() } catch (e) { /* already closed */ }
+try { await browser.close() } catch (e) { /* already closed */ }
 
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`)
